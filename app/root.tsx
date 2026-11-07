@@ -92,12 +92,21 @@ export function Layout({ children }: { children: React.ReactNode }) {
   );
 }
 
+function isBoardPath(pathname: string): boolean {
+  return pathname.startsWith("/boards/") || pathname.startsWith("/debug");
+}
+
 function DbSyncSetup() {
   const qc = useQueryClient();
   useNavigationState();
+  const { pathname } = useLocation();
   useDbSync({
     queryClient: qc,
     ignoreSource: TAB_ID,
+    // Board pages watch background work: parallel sorter sub-agents and
+    // webhook imports change the board while it is open.
+    ...(isBoardPath(pathname) ? { realtime: { reason: "sorter sub-agents and imports change an open board in the background" } } : {}),
+    pauseWhenHidden: true,
   });
   return null;
 }

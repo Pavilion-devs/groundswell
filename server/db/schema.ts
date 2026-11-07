@@ -182,7 +182,9 @@ export const placements = pgTable(
     }),
     confidence: real("confidence"),
     rationale: text("rationale"),
-    /** Verbatim evidence span in `notes.body`, server-validated. */
+    /** For low-confidence notes left in Unsorted: the agent's best guess. */
+    suggestedThemeId: text("suggested_theme_id"),
+    /** Verbatim evidence span in the note text (see noteText() in server/lib/quotes.ts), server-validated. */
     quoteStart: integer("quote_start"),
     quoteEnd: integer("quote_end"),
     /** Pinned placements were made by a person; agent re-sorts skip them. */

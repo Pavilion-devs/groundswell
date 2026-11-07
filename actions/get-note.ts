@@ -4,11 +4,12 @@ import { z } from "zod";
 
 import { getDb, schema } from "../server/db/index.js";
 import { requireBoard } from "../server/lib/boards.js";
+import { noteText, quoteOf } from "../server/lib/quotes.js";
 
 const errors = defineActionErrors("note_not_found");
 
 export default defineAction({
-  description: "Get one note's full text and metadata, plus where it is placed (theme, confidence, rationale, pinned).",
+  description: "Get one note's full text and metadata, plus where it is placed: theme (or the suggested theme if it was left in Unsorted), confidence, the verified evidence quote, rationale, and whether the user pinned it.",
   schema: z.object({ id: z.string().describe("Note id (note_...)") }),
   outputSchema: z.object({
     id: z.string(),
@@ -27,7 +28,9 @@ export default defineAction({
     placement: z
       .object({
         themeId: z.string().nullable(),
+        suggestedThemeId: z.string().nullable(),
         confidence: z.number().nullable(),
+        quote: z.string().nullable(),
         rationale: z.string().nullable(),
         pinned: z.boolean(),
         placedBy: z.string(),
@@ -44,7 +47,10 @@ export default defineAction({
     const [placement] = await db
       .select({
         themeId: schema.placements.themeId,
+        suggestedThemeId: schema.placements.suggestedThemeId,
         confidence: schema.placements.confidence,
+        quoteStart: schema.placements.quoteStart,
+        quoteEnd: schema.placements.quoteEnd,
         rationale: schema.placements.rationale,
         pinned: schema.placements.pinned,
         placedBy: schema.placements.placedBy,
@@ -66,7 +72,17 @@ export default defineAction({
       state: note.state,
       labels: Array.isArray(note.labels) ? (note.labels as string[]) : [],
       sourceCreatedAt: note.sourceCreatedAt,
-      placement: placement ?? null,
+      placement: placement
+        ? {
+            themeId: placement.themeId,
+            suggestedThemeId: placement.suggestedThemeId,
+            confidence: placement.confidence,
+            quote: quoteOf(noteText(note), placement.quoteStart, placement.quoteEnd),
+            rationale: placement.rationale,
+            pinned: placement.pinned,
+            placedBy: placement.placedBy,
+          }
+        : null,
     };
   },
 });

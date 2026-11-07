@@ -4,11 +4,12 @@ import { z } from "zod";
 
 export default defineAction({
   description:
-    "Navigate the UI to a specific view or path. Writes a navigate command to application state which the UI reads and auto-deletes.",
+    "Navigate the UI to a specific view or path, e.g. view \"board\" with a boardId to open a board. Writes a navigate command to application state which the UI reads and auto-deletes.",
   schema: z.object({
     view: z.string().optional().describe("View name to navigate to"),
     path: z.string().optional().describe("URL path to navigate to"),
     threadId: z.string().optional().describe("Chat thread ID to open"),
+    boardId: z.string().optional().describe('Board id to open; use with view "board"'),
   }),
   http: false,
   run: async (args) => {
@@ -19,6 +20,7 @@ export default defineAction({
     if (args.view) nav.view = args.view;
     if (args.path) nav.path = args.path;
     if (args.threadId) nav.threadId = args.threadId;
+    if (args.boardId) nav.boardId = args.boardId;
     nav._writeId = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     await writeAppStateForCurrentTab("navigate", nav);
     return `Navigating to ${args.view || args.path}`;

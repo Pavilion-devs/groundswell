@@ -193,6 +193,13 @@ CREATE INDEX IF NOT EXISTS ${t}_owner_idx ON ${t} (owner_email);`,
           .join("\n"),
       },
     },
+    {
+      version: 3,
+      name: "groundswell-placement-suggestion",
+      sql: {
+        postgres: `ALTER TABLE placements ADD COLUMN IF NOT EXISTS suggested_theme_id TEXT;`,
+      },
+    },
   ],
   { table: "groundswell_migrations" },
 );

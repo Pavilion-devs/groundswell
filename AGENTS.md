@@ -49,6 +49,20 @@ Groundswell turns feedback into a board of themes shaped by the user and the age
 | `list-notes` | Browse/search notes (filter by source, theme, unsorted) |
 | `get-note` | Full text of one note plus its placement |
 | `get-run-status` | Status/progress of an import or sorting run |
+| `sample-notes` | Stratified, engagement-weighted sample for drafting a codebook |
+| `save-codebook` | Save a new active codebook version (themes carry placements across versions by key) |
+| `get-codebook` | Active themes with note/pinned counts, plus sorted/unsorted counts |
+| `start-sort-run` | Open a sort run split into slices for parallel `theme-sorter` sub-agents |
+| `get-notes-for-sorting` | Next batch of not-yet-sorted notes in one slice (stable hash partition) |
+| `place-notes` | Atomic batch placement; validates theme keys and verbatim quotes; never touches pinned notes |
+| `finish-sort-run` | Close a sort run and return proof (placed / unsorted / quotes / remaining) |
+| `move-notes` | The user's decision (drag): pins notes and records corrections for learning |
+| `create-theme` / `update-theme` / `delete-theme` | Edit themes in the active codebook (delete returns notes to Unsorted) |
+| `merge-themes` / `split-theme` | Fold themes together, or split one into sharper themes by note ids |
 | `seed-demo-board` | Developer setup only (hidden from the agent): demo board from `BuilderIO/agent-native` |
+
+Sorting is agent work, not action work (framework rule: no model calls in actions). The main agent follows the shared skill `skills/feedback-synthesis/SKILL.md` and spawns `agents/theme-sorter.md` sub-agents; both ship from `server/agent-resources/` via `server/plugins/agent-resources.ts`. Quotes are stored only as spans into `noteText()` (title + blank line + body) after `findQuote()` confirms they are verbatim.
+
+Selection contract: the UI writes tab-scoped `selection:<TAB_ID>` = `{ boardId, noteIds, themeIds }`; navigation carries `{ view: "board" | "debug", boardId }`; `view-screen` returns the board, its themes and the selection.
 
 GitHub import uses GraphQL when the user (or the deployment) has a `GITHUB_TOKEN`, otherwise the REST search API (anonymous, capped at 1,000 issues, 10 requests/minute).

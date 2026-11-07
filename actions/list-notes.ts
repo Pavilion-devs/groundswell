@@ -4,6 +4,7 @@ import { z } from "zod";
 
 import { getDb, schema } from "../server/db/index.js";
 import { requireBoard } from "../server/lib/boards.js";
+import { noteText, quoteOf } from "../server/lib/quotes.js";
 
 const EXCERPT = 280;
 
@@ -42,6 +43,10 @@ export default defineAction({
         labels: z.array(z.string()),
         sourceCreatedAt: z.string().nullable(),
         themeId: z.string().nullable(),
+        suggestedThemeId: z.string().nullable(),
+        confidence: z.number().nullable(),
+        pinned: z.boolean(),
+        quote: z.string().nullable(),
       }),
     ),
   }),
@@ -79,6 +84,11 @@ export default defineAction({
           labels: n.labels,
           sourceCreatedAt: n.sourceCreatedAt,
           themeId: p.themeId,
+          suggestedThemeId: p.suggestedThemeId,
+          confidence: p.confidence,
+          pinned: p.pinned,
+          quoteStart: p.quoteStart,
+          quoteEnd: p.quoteEnd,
         })
         .from(n)
         .leftJoin(p, eq(p.noteId, n.id))
@@ -90,11 +100,15 @@ export default defineAction({
 
     return {
       total: Number(totalRow?.n ?? 0),
-      notes: rows.map(({ body, labels, themeId, ...r }) => ({
+      notes: rows.map(({ body, labels, themeId, suggestedThemeId, confidence, pinned, quoteStart, quoteEnd, ...r }) => ({
         ...r,
         excerpt: body.length > EXCERPT ? `${body.slice(0, EXCERPT).trimEnd()}…` : body,
         labels: Array.isArray(labels) ? (labels as string[]) : [],
         themeId: themeId ?? null,
+        suggestedThemeId: suggestedThemeId ?? null,
+        confidence: confidence ?? null,
+        pinned: pinned ?? false,
+        quote: quoteOf(noteText({ title: r.title, body }), quoteStart ?? null, quoteEnd ?? null),
       })),
     };
   },

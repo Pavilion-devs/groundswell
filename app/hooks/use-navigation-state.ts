@@ -18,13 +18,15 @@ export interface NavigationState {
   path?: string;
   publicPath?: string;
   threadId?: string;
+  /** Groundswell: the board on screen (board view, or the engine debug view). */
+  boardId?: string;
 }
 
 export function useNavigationState() {
   useAgentRouteState<NavigationState>({
     browserTabId: TAB_ID,
     requestSource: TAB_ID,
-    getNavigationState: ({ pathname }) => navigationStateForPath(pathname),
+    getNavigationState: ({ pathname, searchParams }) => navigationStateForPath(pathname, searchParams),
     getCommandPath: commandPathForNavigation,
   });
 }
@@ -62,17 +64,27 @@ function matchesPathPrefix(pathname: string, prefix: string): boolean {
   return pathname === prefix || pathname.startsWith(`${prefix}/`);
 }
 
-export function navigationStateForPath(pathname: string): NavigationState {
+export function navigationStateForPath(pathname: string, searchParams?: URLSearchParams): NavigationState {
   const threadId = threadIdFromPath(pathname);
+  const boardId = boardIdFromPath(pathname) ?? (pathname.startsWith("/debug") ? searchParams?.get("board") : null);
   return {
     view: viewForPath(pathname),
     path: pathname,
     publicPath: appPathFromLocalRoute(pathname),
     ...(threadId ? { threadId } : {}),
+    ...(boardId ? { boardId } : {}),
   };
 }
 
+/** `/boards/<id>` → `<id>`. */
+function boardIdFromPath(pathname: string): string | null {
+  const m = pathname.match(/^\/boards\/([^/]+)/);
+  return m?.[1] ? decodeURIComponent(m[1]) : null;
+}
+
 function viewForPath(pathname: string): string {
+  if (pathname.startsWith("/boards/")) return "board";
+  if (pathname.startsWith("/debug")) return "debug";
   if (isChatPathname(pathname)) return "chat";
   if (pathname === HOME_PATH) return "home";
   if (pathname.startsWith("/database")) return "database";
@@ -111,6 +123,10 @@ function pathForView(view?: string): string {
 }
 
 export function pathForCommand(command: any): string {
+  // Until the board UI exists (Phase 6), a board opens in the engine debug view.
+  if ((command?.view === "board" || command?.view === "debug") && typeof command?.boardId === "string") {
+    return `/debug?board=${encodeURIComponent(command.boardId)}`;
+  }
   const path = pathForView(command?.view);
   if (command?.view !== "chat" && command?.view !== "ask") return path;
   const threadId =

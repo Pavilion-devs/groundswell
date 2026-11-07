@@ -87,17 +87,20 @@ Product managers, founders, DevRel and OSS maintainers who have a pile of feedba
 - **The human has the final word.** Manual placements are **pinned** and never overridden by re-sorts.
 - **Deterministic actions, AI in the agent.** Actions do focused data work. Framework rule (actions skill): no LLM calls inside app actions, except `@agent-native/core/decisions` for classification and scoring. So the agent itself does synthesis (drafting the codebook, revisions, briefs) and saves results through focused actions; bulk classification uses the `decisions` module. Phase 2 starts by reading that module and adjusting the pipeline table below to fit it.
 
-### Pipeline
-| Stage | Model | Notes |
-| --- | --- | --- |
-| Codebook draft | `claude-opus-5-5` (fallback `claude-sonnet-5-5`) | Stratified sample (~150 notes); outputs themes with definitions, include/exclude rules, examples |
-| Classification | `claude-haiku-5-5` | Batches of ~25 notes with the codebook; returns theme id, confidence, rationale, quote span. Streams results row by row so the board animates |
-| Codebook revision | `claude-sonnet-5-5` | Input: current codebook + corrections; output: proposed edits as a structured diff |
-| Re-sort | `claude-haiku-5-5` | Only notes likely affected (same source theme as corrections, low confidence, or near corrected notes) |
-| Duplicate detection | `claude-haiku-5-5` | Within a theme; groups near-identical reports |
-| Insight Brief | `claude-sonnet-5-5` | Grounded in theme notes; quotes validated server-side |
+### Pipeline (revised in Phase 2 to fit the framework)
 
-Model ids live in one config file so they are easy to swap. LLM provider via Builder.io connect or `ANTHROPIC_API_KEY`.
+The framework forbids model calls inside actions, and its one exception (`@agent-native/core/decisions`) only supports OpenAI or the Builder.io provider and returns a label without rationale or quote. So **the agent does the AI work and actions do the data work**:
+
+| Stage | Who | Actions | Notes |
+| --- | --- | --- | --- |
+| Codebook draft | Main agent (app model, Sonnet/Opus) | `sample-notes` → `save-codebook` | Stratified, engagement-weighted sample across sources, labels and time. 6–14 themes with name, definition, include/exclude rules |
+| Classification | **Agent team**: the main agent spawns parallel `theme-sorter` sub-agents (one per slice) that show as live chips in chat | `start-sort-run`, `get-notes-for-sorting` (stable hash partition `slice i of n`), `place-notes` (atomic batch of ~25) | Server validates theme keys and that every quote is a verbatim substring; confidence < 0.5 goes to Unsorted with the best guess kept as `suggested_theme_id`. Pinned notes are never touched |
+| Verify | Main agent | `get-board`, `finish-sort-run` | Reports proof (M of N placed), per reliable-mutations |
+| Board edits | UI drag/lasso **or** agent on request | `move-notes`, `create-theme`, `update-theme`, `merge-themes`, `split-theme`, `delete-theme` | A move from the UI (`caller: frontend`) pins the note and records a correction (Phase 3 learns from it) |
+| Codebook revision | Main agent (Phase 3) | `propose-codebook-revision` / `apply-codebook-revision` | From corrections |
+| Duplicates, Insight Brief | Main agent (Phase 4) | `save-duplicate-groups`, `save-brief` | Quotes validated server-side |
+
+Profiles and skills ship as shared agent resources written at boot (`agents/theme-sorter.md`, `skills/feedback-synthesis/SKILL.md`), so they appear in the app's Resources tab and can be edited by the user.
 
 ### Learning from corrections
 - Every manual move writes a `corrections` row (note, from theme, to theme, optional reason).
@@ -224,12 +227,21 @@ Each phase ends with a working, demoable app.
 > **Order decision: engine first, UI last.** Phases 1–4 build the whole engine (data, agent, learning, outputs) as actions, testable from the CLI and agent chat with only plain debug views. The UI is shaped with the user in Phase 5 *before* any real UI is built, using mockups filled with the real themes the engine produced. Real data makes the design review honest; generic lorem-ipsum mockups hide problems.
 
 ### Phase 2 — Agent sorting (engine)
-- [ ] `draft-codebook`, streaming `classify-notes` (rows written as batches finish), `get-run-status`
-- [ ] Quote-span validation, confidence → Unsorted
-- [ ] Board-edit actions: `move-notes`, `merge-themes`, `split-theme`, `rename-theme`, `create-theme`, `pin-note`
-- [ ] Context-awareness plumbing: `selection` / `navigation` contract the UI will write later; agent can act on "these notes"
-- [ ] Plain debug view (themes → notes list) to eyeball quality
+- [x] Codebook: `sample-notes` (stratified), `save-codebook` (versioned, placements carried by key), `get-codebook`
+- [x] Sorting by an agent team: `start-sort-run` (hash-partitioned slices), `get-notes-for-sorting`, `place-notes` (atomic batch), `finish-sort-run` (proof); shared `theme-sorter` profile + `feedback-synthesis` skill shipped as agent resources
+- [x] Quote-span validation (verbatim, whitespace/curly-quote tolerant, mapped back to source), confidence < 0.5 → Unsorted with `suggested_theme_id`
+- [x] Board-edit actions: `move-notes` (pins + corrections), `create-theme`, `update-theme`, `merge-themes`, `split-theme`, `delete-theme`
+- [x] Context contract: `navigation {view, boardId}`, tab-scoped `selection {boardId, noteIds, themeIds}`, enriched `view-screen`; board pages opt into realtime sync
+- [x] Plain debug view: themes, Unsorted with suggestions, quotes, pins, note checkboxes writing the selection
+- [x] Unit tests for quotes, sampling, keys (17 passing); end-to-end CLI test of every guard
 - **Done when:** one command turns the agent-native import into a sensible set of themes, and the agent can split/merge/move from chat.
+
+**Phase 2 status and findings (2026-11-07)**
+- One chat message ("Sort my Agent-Native feedback board into themes") → codebook of 13 themes → 4 parallel `theme-sorter` sub-agents → 300+ notes placed in about 2.5 minutes.
+- Iteration 1 → 2, measured on the same 340 issues: notes in a theme 60% → **84%**; themed notes with a verified quote 33% → **100%** (0 quotes rejected). Fixes: required quotes with `quoteMisses` retry, and the skill's guidance for non-feedback trackers.
+- Bug found and fixed: colour assignment looped forever with more than 12 themes (hung the server); now a bounded least-used picker with tests.
+- **Open (blocked on Anthropic credits running out mid-run):** finish the last 33 notes; exercise the coverage loop (`scope: "unsorted"`) end to end; ask the agent to split/merge a selection from chat (verified via CLI only so far).
+- **Follow-ups:** a stale-run reaper (a run whose agent dies stays `running`; closing it with `finish-sort-run` works); a theme flag for non-feedback themes (e.g. "Maintainer and CI trackers", 73 notes) so priorities and briefs skip them (Phase 4).
 
 ### Phase 3 — Teach by dragging (engine)
 - [ ] Corrections log, `propose-codebook-revision` (structured diff), `apply-codebook-revision`, undo
