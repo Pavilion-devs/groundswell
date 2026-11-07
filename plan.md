@@ -85,7 +85,7 @@ Product managers, founders, DevRel and OSS maintainers who have a pile of feedba
 - **Never fabricate.** Every evidence quote must be a verbatim substring of a source note; the server validates spans and drops anything that does not match. Counts come from SQL, never from the model.
 - **Show the work.** Each classification stores confidence + a one-line rationale + the quoted span.
 - **The human has the final word.** Manual placements are **pinned** and never overridden by re-sorts.
-- **Deterministic actions, AI in the agent.** Actions do focused data work; LLM calls happen in dedicated pipeline actions or agent turns.
+- **Deterministic actions, AI in the agent.** Actions do focused data work. Framework rule (actions skill): no LLM calls inside app actions, except `@agent-native/core/decisions` for classification and scoring. So the agent itself does synthesis (drafting the codebook, revisions, briefs) and saves results through focused actions; bulk classification uses the `decisions` module. Phase 2 starts by reading that module and adjusting the pipeline table below to fit it.
 
 ### Pipeline
 | Stage | Model | Notes |
@@ -208,9 +208,18 @@ Each phase ends with a working, demoable app.
 - **Done when:** app runs locally, agent answers, tables exist.
 
 ### Phase 1 — Data in
-- [ ] GitHub importer (paginated issues, reactions, comment counts, labels; skip PRs), CSV + text import
-- [ ] Import runs from CLI (`pnpm action add-github-source ...`) and agent chat, with progress in `runs`
-- **Done when:** all agent-native issues are in SQL and listed in a plain debug view.
+- [x] GitHub importer: GraphQL with a token (issues only, ~1 request per 100), REST search without one (anonymous, 1,000 cap); bots skipped by default; incremental re-sync; idempotent re-add
+- [x] CSV import (papaparse, auto-detected columns, http(s)-only links, stable row ids) and pasted-text import (paragraph/line split, dedupe)
+- [x] Board actions (`create/list/get/delete-board`), `list-notes`, `get-note`, `get-run-status`; runs tracked with a state machine
+- [x] Works from CLI and from the in-app agent chat (verified: grounded answer over real issues); action table in `AGENTS.md`
+- [x] `seed-demo-board` (hidden from the agent); `/debug` plain view; parsing unit tests
+- **Done:** 335 real human-filed `BuilderIO/agent-native` issues on the demo board.
+
+**Phase 1 findings that shape later phases**
+- Of 1,005 agent-native issues, **665 are bot health-check reports**. Filtering them is on by default and is itself a demo moment ("665 bot reports filtered out").
+- That leaves **335 human issues**, a good board size. For a bigger "swell" moment, consider a second demo board on a larger, recognizable repo, and an option to include issue comments as notes.
+- **Reactions are sparse** on this repo (mostly 0–1). Priority scoring should lean on comment count and distinct reporters too.
+- Add a `GITHUB_TOKEN` to `.env` for local work: anonymous search allows 10 requests/minute, so a second import within a minute is rate-limited.
 
 > **Order decision: engine first, UI last.** Phases 1–4 build the whole engine (data, agent, learning, outputs) as actions, testable from the CLI and agent chat with only plain debug views. The UI is shaped with the user in Phase 5 *before* any real UI is built, using mockups filled with the real themes the engine produced. Real data makes the design review honest; generic lorem-ipsum mockups hide problems.
 

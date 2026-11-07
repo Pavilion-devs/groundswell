@@ -54,7 +54,7 @@ export const sources = pgTable(
     config: jsonb("config").notNull(),
     label: text("label").notNull(),
     lastSyncedAt: text("last_synced_at"),
-    /** Import stats: { imported, skipped, pullRequestsSkipped }. */
+    /** Import stats: { notes, lastFetched, botsSkipped, truncated, api }. */
     stats: jsonb("stats"),
     createdAt: text("created_at").notNull().default(now),
     // Tenant scope copied from the board (see note at top).

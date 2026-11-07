@@ -31,3 +31,24 @@ Use `adding-a-feature` for functional parity and `frontend-design` for a user-fa
 Before building common workspace or agent UI, read `agent-native-toolkit`; for supported customization, read `customizing-agent-native`.
 
 - Guarded verification: run `pnpm agent-native:doctor`; fix findings before done.
+
+## Groundswell
+
+Groundswell turns feedback into a board of themes shaped by the user and the agent. Project scope, phases and rules live in `plan.md` and `CLAUDE.md`. Data model: `server/db/schema.ts` (boards are the shareable resource; every other table is a board child carrying `owner_email`/`org_id`). Every action that touches children calls `requireBoard(boardId, role)` from `server/lib/boards.ts` first.
+
+| Action | Use it to |
+| --- | --- |
+| `list-boards` | List boards the user can open, with note counts |
+| `get-board` | Board summary: sources, note/sorted/unsorted counts, recent runs |
+| `create-board` | Start a new board |
+| `delete-board` | Permanently delete a board (owner only, needs approval) |
+| `add-github-source` | Import a repo's issues (bots skipped by default); re-calling re-syncs |
+| `sync-source` | Incremental re-sync of a GitHub source (`full=true` re-fetches all) |
+| `import-csv` | Import CSV rows as notes; columns auto-detected or mapped |
+| `import-text` | Import pasted feedback split by paragraph or line |
+| `list-notes` | Browse/search notes (filter by source, theme, unsorted) |
+| `get-note` | Full text of one note plus its placement |
+| `get-run-status` | Status/progress of an import or sorting run |
+| `seed-demo-board` | Developer setup only (hidden from the agent): demo board from `BuilderIO/agent-native` |
+
+GitHub import uses GraphQL when the user (or the deployment) has a `GITHUB_TOKEN`, otherwise the REST search API (anonymous, capped at 1,000 issues, 10 requests/minute).

@@ -45,7 +45,12 @@ pnpm install
 pnpm dev            # local app, PGlite
 pnpm typecheck
 pnpm action <name>  # run an action from the CLI
+pnpm test           # unit tests
 ```
+
+- Local sign-in ("Continue as local dev") is `dev@local.test`. Run CLI actions as that user so their data shows in the browser: `AGENT_USER_EMAIL=dev@local.test pnpm action <name>`.
+- `pnpm action seed-demo-board` creates/refreshes the demo board from `BuilderIO/agent-native`.
+- The dev server owns the local PGlite database; `db-exec` and `agent-native agent` cannot open it while `pnpm dev` runs. Test the agent through the app chat instead.
 
 ## Definition of done for any feature
 
