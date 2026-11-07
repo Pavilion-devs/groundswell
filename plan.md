@@ -200,10 +200,11 @@ Indexes on `(board_id, theme_id)` for placements, `(board_id, external_id)` uniq
 Each phase ends with a working, demoable app.
 
 ### Phase 0 — Foundation
-- [ ] Upgrade Node to ≥ 22.22 (currently 20.20)
-- [ ] Scaffold from the Chat template into this folder, `git init`, first commit
-- [ ] Connect an LLM (Builder.io or `ANTHROPIC_API_KEY`)
-- [ ] Schema + migrations, seed script skeleton
+- [x] Node ≥ 22.22 — 22.23.1 was already installed via nvm; pinned in `.nvmrc`
+- [x] Scaffold from the Chat template (`@agent-native/core` 0.226.0) into this folder; template baseline kept as the first commit for the disclosure; work on `main`
+- [ ] Connect an LLM (Builder.io or `ANTHROPIC_API_KEY`) — **waiting on the user**
+- [x] Schema + migrations (`server/db/schema.ts`, `server/plugins/db.ts` v1 + v2 tenant scope); typecheck and doctor clean
+- [ ] Seed script — moved to Phase 1, since it needs the import actions
 - **Done when:** app runs locally, agent answers, tables exist.
 
 ### Phase 1 — Data in
