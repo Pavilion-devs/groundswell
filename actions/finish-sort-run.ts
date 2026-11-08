@@ -23,6 +23,7 @@ export default defineAction({
     quotesRejected: z.number(),
     notReached: z.number(),
     board: z.object({ notes: z.number(), inThemes: z.number(), unsorted: z.number(), unsortedShare: z.number() }),
+    nextStep: z.string(),
     message: z.string(),
   }),
   errors,
@@ -61,6 +62,12 @@ export default defineAction({
 
     const complete = notReached === 0;
     const processed = placedInThemes + leftUnsorted;
+    const report =
+      "Then write your reply to the user (your turn is not finished without it): one line with the board result from these numbers, the biggest themes from get-codebook one line each, and the next useful step.";
+    const nextStep =
+      scope === "new" && board.unsortedShare > 0.2
+        ? `Unsorted is ${Math.round(board.unsortedShare * 100)}%, above 20%: run the coverage step of the feedback-synthesis skill once (list-notes unsorted, create-theme for real clusters, start-sort-run scope "unsorted", finish-sort-run). ${report}`
+        : `${notReached > 0 ? `${notReached} notes were not reached; offer to sort them. ` : ""}${report}`;
     return {
       runId,
       scope,
@@ -71,6 +78,7 @@ export default defineAction({
       quotesRejected,
       notReached,
       board,
+      nextStep,
       message:
         `This run processed ${processed} notes: ${placedInThemes} into themes (${withQuote} with a verified quote), ${leftUnsorted} left in Unsorted.` +
         `${complete ? "" : ` ${notReached} notes were not reached.`}` +

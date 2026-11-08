@@ -25,6 +25,8 @@ export default defineAction({
     total: z.number(),
     slices: z.array(z.object({ slice: z.number(), of: z.number(), notes: z.number() })),
     sorterBrief: z.string(),
+    mode: z.enum(["solo", "team"]),
+    nextStep: z.string(),
     message: z.string(),
   }),
   errors,
@@ -48,12 +50,21 @@ export default defineAction({
     );
     const runId = await startRun(board, "classify", { codebookId: active.codebook.id, version: active.codebook.version, slices: of, scope }, total);
     const sorterBrief = `Sort board ${boardId}, run ${runId}, codebook v${active.codebook.version}${scope === "unsorted" ? " (re-sorting Unsorted after new themes were added)" : ""}. For your slice: loop get-notes-for-sorting(boardId, runId, slice, of) then place-notes(boardId, runId, placements) until remaining is 0. Every themed placement needs an exact quote; resend any note listed in quoteMisses.`;
+    // The next step lives in the result, not only in the skill: models follow
+    // the instruction in front of them at decision time far more reliably.
+    const mode: "solo" | "team" = of === 1 ? "solo" : "team";
+    const nextStep =
+      mode === "solo"
+        ? `Sort these ${total} notes yourself: loop get-notes-for-sorting(boardId, runId, slice 0, of 1) then place-notes until remaining is 0. Then call finish-sort-run(runId).`
+        : `Spawn exactly ${of} theme-sorter sub-agents now, in this turn: ${of} agent-teams calls with action "spawn" and agent "theme-sorter", one per slice (slice 0 to ${of - 1}, of ${of}), each given the sorterBrief plus its slice and of. Do not call get-notes-for-sorting or place-notes yourself in a team run. Then check agent-teams status until every sorter is completed or errored, and call finish-sort-run(runId).`;
     return {
       runId,
       codebookVersion: active.codebook.version,
       total,
       slices: perSlice,
       sorterBrief,
+      mode,
+      nextStep,
       message: `Ready to ${scope === "unsorted" ? "re-sort" : "sort"} ${total} notes into ${active.themes.length} themes across ${of} slice${of === 1 ? "" : "s"}.`,
     };
   },

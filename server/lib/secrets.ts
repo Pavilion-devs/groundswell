@@ -23,7 +23,8 @@ export class SecretLookupError extends Error {}
 /** The caller's GitHub token, or null when they have not added one. */
 export async function getGithubToken(): Promise<string | null> {
   const detail = await resolveSecretDetailed(GITHUB_TOKEN_KEY);
-  if (detail.lookupFailed) {
+  // A failed store lookup can still return the deployment value; a value wins.
+  if (detail.lookupFailed && !detail.value) {
     throw new SecretLookupError("Could not read the saved GitHub token. Try again in a moment.");
   }
   return detail.value || null;

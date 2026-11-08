@@ -42,7 +42,7 @@ export default defineAction({
   run: async ({ id }) => {
     const db = getDb();
     const [note] = await db.select().from(schema.notes).where(eq(schema.notes.id, id)).limit(1);
-    if (!note) return errors.noWrite(`Note ${id} was not found.`, "note_not_found", { statusCode: 404 });
+    if (!note) return errors.noWrite(`Note ${id} was not found. Copy note ids exactly from a list-notes or get-notes-for-sorting result; never retype them.`, "note_not_found", { statusCode: 404 });
     await requireBoard(note.boardId, "viewer");
     const [placement] = await db
       .select({

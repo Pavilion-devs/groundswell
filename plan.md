@@ -245,11 +245,13 @@ Each phase ends with a working, demoable app.
   - Last 33 notes: sorted from chat in 1m 12s, 26 into themes and 7 to Unsorted. Board: 285 of 340 in themes, 16% Unsorted.
   - Coverage loop (`scope: "unsorted"`), run on request because Unsorted was under the 20% trigger: 2 new themes ("Native Resources and Skills break", "Framework data layer migrations and stores break"), 13 of 55 Unsorted notes moved in, 13/13 quotes verified, 0 rejected. Board: **298 of 340 in themes (88%), every themed note has a verified quote**, 12% Unsorted.
   - Selection from chat: selected 8 "Design nightly shard N/8" notes on the debug page and said "split these". The agent read the selection via `view-screen` and split exactly those 8 into "Design nightly shards hit 37-minute cap" in 23 s (SQL-verified).
-- **Muse Spark findings:** it followed the skill and tool contracts well, and the server guards held: one `get-note` call with a mistyped id was rejected, as designed. Three gaps to close:
-  - It sorted 55 notes itself instead of spawning sorters (skill says spawn above 40), so agent teams on Muse are untested.
-  - The coverage turn ended without its written report.
-  - The status line can sit on "Working" for ~2 min while it reasons.
-  Tighten the skill wording if we stay on Muse.
+- **Muse Spark findings and fixes (2026-11-08):** the first runs on Muse sorted 55 notes solo instead of spawning sorters, ended a turn without its report, and sent one mistyped note id (rejected by the server, as designed). Fixed by putting the next step in the action results, not only in the skill:
+  - `start-sort-run` returns `mode` ("solo" or "team") and a `nextStep` that says exactly how many `theme-sorter` sub-agents to spawn and forbids sorting yourself in a team run.
+  - `finish-sort-run` returns a `nextStep` that triggers the coverage pass above 20% Unsorted and requires the written report.
+  - The skill, system prompt and sorter profile say to copy ids exactly and never end a turn on a tool call; `get-note`'s not-found error says where to copy ids from.
+  - Engine bug found on the way: sub-agent runs build the engine without a key, so `server/lib/meta-engine.ts` now resolves `META_API_KEY` per request through the secret store (registered with `registerRequiredSecret`). In sub-agent runs a store lookup can fail and still return the deployment value; both the Meta key and `getGithubToken` now use the value when one comes back.
+  - **Verified:** "Re-sort the Unsorted notes" → `mode: team` → 2 parallel `theme-sorter` sub-agents → 42/42 processed, 15 into themes (15/15 quotes verified, 0 rejected), full written report, 1m 51s. **Board: 313 of 340 notes in 16 themes (92%), every themed note quoted, 8% Unsorted.**
+  - Cosmetic: the team card list can show a stale duplicate "sorter slice 0/2" label while running (framework UI; our Phase 6 board will show runs itself).
 - **Follow-ups:** a stale-run reaper (a run whose agent dies stays `running`; closing it with `finish-sort-run` works); a theme flag for non-feedback themes (e.g. "Maintainer and CI trackers", 71 notes) so priorities and briefs skip them (Phase 4).
 
 ### Phase 3 — Teach by dragging (engine)
