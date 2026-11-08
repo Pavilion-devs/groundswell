@@ -32,7 +32,7 @@ export const boards = pgTable("boards", {
   id: text("id").primaryKey(),
   title: text("title").notNull(),
   description: text("description"),
-  /** Tunable priority weights: { volume, authors, reactions, recency }. */
+  /** Tunable priority weights: { volume, reporters, engagement, recency } (see server/lib/priorities.ts). */
   priorityWeights: jsonb("priority_weights"),
   createdAt: text("created_at").notNull().default(now),
   updatedAt: text("updated_at").notNull().default(now),
@@ -159,6 +159,11 @@ export const themes = pgTable(
     includeRules: jsonb("include_rules"),
     excludeRules: jsonb("exclude_rules"),
     color: text("color"),
+    /**
+     * Not product feedback (CI trackers, internal tasks, spam). Kept on the
+     * board so Unsorted stays clean, but ranked apart from real problems.
+     */
+    internal: boolean("internal").notNull().default(false),
     /** Canvas position; null until laid out. */
     x: real("x"),
     y: real("y"),
@@ -266,13 +271,39 @@ export const briefs = pgTable(
       .references(() => themes.id, { onDelete: "cascade" }),
     /** { problem, impact, evidence: [{ noteId, start, end }], nextStep }. */
     body: jsonb("body").notNull(),
+    title: text("title"),
+    /** Facts computed in SQL when the brief was saved (counts, reporters, engagement); never written by the model. */
+    metrics: jsonb("metrics"),
     filedIssueUrl: text("filed_issue_url"),
+    filedAt: text("filed_at"),
     createdAt: text("created_at").notNull().default(now),
     // Tenant scope copied from the board (see note at top).
     ownerEmail: text("owner_email").notNull().default("local@localhost"),
     orgId: text("org_id"),
   },
   (t) => [index("briefs_theme_idx").on(t.themeId)],
+);
+
+/** A periodic summary of what changed on a board (written by the weekly digest automation). */
+export const digests = pgTable(
+  "digests",
+  {
+    id: text("id").primaryKey(),
+    boardId: text("board_id")
+      .notNull()
+      .references(() => boards.id, { onDelete: "cascade" }),
+    periodStart: text("period_start").notNull(),
+    periodEnd: text("period_end").notNull(),
+    /** The SQL facts the digest was written from. */
+    stats: jsonb("stats").notNull(),
+    title: text("title").notNull(),
+    body: text("body").notNull(),
+    createdAt: text("created_at").notNull().default(now),
+    // Tenant scope copied from the board (see note at top).
+    ownerEmail: text("owner_email").notNull().default("local@localhost"),
+    orgId: text("org_id"),
+  },
+  (t) => [index("digests_board_idx").on(t.boardId, t.createdAt)],
 );
 
 /** Long-running agent work (import, codebook, classify, re-sort, ...). */

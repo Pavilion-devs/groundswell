@@ -31,13 +31,15 @@ Keep model ids in one config module (`server/lib/models.ts`):
 - Revisions, briefs: `claude-sonnet-5-5`
 - Classification, re-sort, duplicates: `claude-haiku-5-5`
 
-**Current agent engine (since 2026-11-08): Meta `muse-spark-1.3`.** Anthropic credits ran out, so `agent-native.config.ts` sets `agent: { engine: "meta" }`. The `meta` engine is registered in `server/lib/meta-engine.ts` (OpenAI-compatible Meta Model API, key from `META_API_KEY`). To go back to Claude, set `engine: "anthropic"` and pick the model in the chat's model picker.
+**Current agent engine (since 2026-11-08): Meta `muse-spark-1.3`.** Anthropic credits ran out. `server/lib/meta-engine.ts` registers the `meta` engine (OpenAI-compatible Meta Model API, key from `META_API_KEY`, resolved per request) and selects it with runtime `defineAppConfig` so chat, sub-agents and background automations all use it (`agent-native.config.ts` is build config and does not reach engine resolution). To go back to Claude, change that `defineAppConfig` line to `engine: "anthropic"`.
 
 ## Environment
 
 - Node **≥ 22.22** and pnpm (machine currently has Node 20.20; upgrade before scaffolding).
 - LLM: `META_API_KEY` in `.env` (current engine), or `ANTHROPIC_API_KEY` / Builder.io connect.
 - `GITHUB_TOKEN` (optional for import rate limits, required for filing issues).
+- `AGENT_NATIVE_SELF_DISPATCH_URL=http://localhost:8080` in `.env` for local dev, so background automations reach the dev server (without it they dispatch to port 3000).
+- Never run `file-github-issue` for real without the user's explicit go-ahead and target repo; use `dryRun` to test.
 - Never commit `.env`, tokens or personal data.
 
 ## Commands (after scaffolding)

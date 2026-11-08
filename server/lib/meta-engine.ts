@@ -1,4 +1,5 @@
 import { createAISDKEngine, registerAgentEngine } from "@agent-native/core/agent/engine";
+import { defineAppConfig } from "@agent-native/core/app-config";
 import { registerRequiredSecret } from "@agent-native/core/secrets";
 import { resolveSecretDetailed } from "@agent-native/core/server";
 
@@ -79,3 +80,11 @@ registerAgentEngine({
       skipCredentialFailureTracking: true,
     }),
 });
+
+/**
+ * Make Meta the engine for every agent run, not only chat turns started in the
+ * browser: background automations (webhooks, schedules) resolve their engine
+ * from this runtime config. agent-native.config.ts is build-time config and
+ * does not reach the server's engine resolution.
+ */
+defineAppConfig({ agent: { engine: META_ENGINE_NAME, model: META_MODELS.default } });

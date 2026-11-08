@@ -210,6 +210,31 @@ ALTER TABLE codebooks ADD COLUMN IF NOT EXISTS restore_snapshot JSONB;
 CREATE INDEX IF NOT EXISTS corrections_board_pending_idx ON corrections (board_id) WHERE consumed_by_codebook_id IS NULL;`,
       },
     },
+    {
+      // Phase 4: internal themes, brief metadata, weekly digests.
+      version: 5,
+      name: "groundswell-prioritize-and-ship",
+      sql: {
+        postgres: `ALTER TABLE themes ADD COLUMN IF NOT EXISTS internal BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE briefs ADD COLUMN IF NOT EXISTS title TEXT;
+ALTER TABLE briefs ADD COLUMN IF NOT EXISTS metrics JSONB;
+ALTER TABLE briefs ADD COLUMN IF NOT EXISTS filed_at TEXT;
+CREATE TABLE IF NOT EXISTS digests (
+  id TEXT PRIMARY KEY,
+  board_id TEXT NOT NULL REFERENCES boards(id) ON DELETE CASCADE,
+  period_start TEXT NOT NULL,
+  period_end TEXT NOT NULL,
+  stats JSONB NOT NULL,
+  title TEXT NOT NULL,
+  body TEXT NOT NULL,
+  created_at TEXT NOT NULL DEFAULT now(),
+  owner_email TEXT NOT NULL DEFAULT 'local@localhost',
+  org_id TEXT
+);
+CREATE INDEX IF NOT EXISTS digests_board_idx ON digests (board_id, created_at);
+CREATE INDEX IF NOT EXISTS digests_owner_idx ON digests (owner_email);`,
+      },
+    },
   ],
   { table: "groundswell_migrations" },
 );

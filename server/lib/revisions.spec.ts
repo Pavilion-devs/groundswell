@@ -8,6 +8,7 @@ const theme = (key: string, name: string, extra: Partial<ParentTheme> = {}): Par
   definition: `Notes about ${name.toLowerCase()} problems.`,
   includeRules: [],
   excludeRules: [],
+  internal: false,
   color: "slot-1",
   x: null,
   y: null,

@@ -1,7 +1,7 @@
 /** Shipped as the shared agent resource `skills/feedback-synthesis/SKILL.md`. */
 export const FEEDBACK_SYNTHESIS_SKILL = `---
 name: feedback-synthesis
-description: How to turn a board of raw feedback into a sharp codebook of themes and sort every note into it with a team of sorter sub-agents, and revise the codebook from the user's corrections. Use when the user asks to sort, cluster, theme, organise or make sense of a board's feedback, or to learn from the notes they moved.
+description: How to turn a board of raw feedback into a sharp codebook of themes and sort every note into it with a team of sorter sub-agents, and revise the codebook from the user's corrections. Use when the user asks to sort, cluster, theme, organise or make sense of a board's feedback, or to learn from the notes they moved, prioritize, find duplicates, write Insight Briefs, file issues, or set up automations.
 ---
 
 # Feedback synthesis
@@ -60,6 +60,38 @@ When the user moves notes the agent placed, each move is a correction: evidence 
 - Report what moved: lead with the changes, then the number of notes that moved and the most telling moves (from → to), and remind the user that undo-codebook-revision restores everything. Notes the user pinned never move.
 - If the user declines, reject-codebook-revision with their reason. If they want it back after applying, undo-codebook-revision.
 - "Why did you move these?" or "what did I teach you?": answer from list-corrections (pendingOnly false) and get-codebook-revision, quoting the user's own reasons.
+
+## 7. Prioritize
+- get-priorities ranks feedback themes 0-100 from SQL facts: volume (duplicates collapsed), distinct reporters, engagement (comments + 2 x reactions), recency. Quote scores and counts exactly as returned; explain a rank from its breakdown ("#1 because 19 people reported it, the most of any theme").
+- Themes that are not product feedback (CI trackers, internal tasks, spam) should be internal: update-theme(id, internal=true). They stay on the board but are listed apart, without a rank. Suggest this when an internal-looking theme ranks high.
+- The user can tune the weights: set-priority-weights (0-5 each, or reset).
+
+## 8. Find duplicates ("these 40 issues are really 12 problems")
+- For one theme: list-notes(boardId, themeId, limit 100) and read titles and excerpts; get-note when two look alike.
+- Group only true duplicates: the same underlying problem, not just the same area. The canonical note is the clearest report. Each group gets a one-line summary.
+- save-duplicate-groups(boardId, theme, groups) replaces the theme's groups and returns notes vs distinct problems. Report that line.
+
+## 9. Write an Insight Brief
+- get-brief-context(boardId, theme). Skip internal themes.
+- save-brief with:
+  - title: an issue-style title naming the problem.
+  - problem: what users hit, in their words. impact: who it hurts and how. No counts in the prose: the brief carries the SQL facts itself.
+  - evidence: 3-6 quotes, each 5-40 consecutive words copied exactly from a note's text, from different reporters where possible, covering the main facets of the problem. Prefer the sentence where a user states the problem or its cost.
+  - nextStep: one concrete thing the team can do.
+- If save-brief rejects a quote, copy it again exactly from the note text and resend. Never paraphrase a quote.
+- Show the user the title, the problem in one line and the quotes, and offer export (export-markdown) or filing.
+
+## 10. Ship it
+- export-markdown(boardId, theme) gives the brief as Markdown; export-markdown(boardId) gives a board report.
+- file-github-issue posts publicly as the user. First say which repo it will go to (default: the board's GitHub source) and offer dryRun=true to preview. Then call it; the user approves in the chat. Report the issue link.
+
+## 11. Automations (keep the board current)
+Create these with the automations tool (manage-automations: action "define", or manage-automation: operation "create"). Confirm the plan with the user first.
+- New issues sort themselves: triggerType "webhook", name "groundswell-new-issues-<board title>", body:
+  "A GitHub issues webhook payload arrived. Call ingest-github-issue with the payload exactly as received and boardId <boardId>. If it says skipped or updated, stop. If a note was added, follow its nextStep: start-sort-run (scope new), sort the note yourself, finish-sort-run. Finish with one line: the issue title and the theme it landed in."
+  Give the user the webhook URL and tell them to add it in the repo's Settings > Webhooks (content type application/json, event: Issues).
+- Weekly digest: triggerType "schedule", schedule "0 9 * * 1" (Mondays 09:00), body:
+  "Call get-digest-data(boardId <boardId>, days 7). Write a short digest from those numbers only and save it with save-digest (same days)."
 
 ## Rules
 - Never invent notes, quotes, counts or users. Numbers come from action results.

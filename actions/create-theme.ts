@@ -16,11 +16,12 @@ export default defineAction({
     definition: z.string().trim().min(10).max(500).describe("What a note must be about to belong here"),
     includeRules: z.array(z.string().trim().min(3).max(200)).max(6).optional().describe("Signals that put a note here"),
     excludeRules: z.array(z.string().trim().min(3).max(200)).max(6).optional().describe("Near-misses that belong elsewhere"),
+    internal: z.preprocess((v) => (v === undefined ? undefined : v === true || v === "true"), z.boolean().optional()).describe("True when the theme is not product feedback (CI trackers, internal tasks, spam): it stays on the board but is ranked apart in priorities and skipped by briefs"),
   }),
   outputSchema: z.object({ id: z.string(), key: z.string(), name: z.string(), message: z.string() }),
   errors: themeErrors,
   mcpAnnotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
-  run: async ({ boardId, name, definition, includeRules, excludeRules }, ctx) => {
+  run: async ({ boardId, name, definition, includeRules, excludeRules, internal }, ctx) => {
     const board = await requireBoard(boardId, "editor");
     const tenant = tenantOf(board);
     const active = await getActiveCodebook(boardId);
@@ -54,6 +55,7 @@ export default defineAction({
       name,
       definition,
       includeRules: includeRules ?? [],
+      internal: internal ?? false,
       excludeRules: excludeRules ?? [],
       color: colorPicker(themes.map((t) => t.color))(),
       createdAt: now,

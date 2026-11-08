@@ -64,6 +64,13 @@ Groundswell turns feedback into a board of themes shaped by the user and the age
 | `get-codebook-revision` | The open proposal as a before/after diff with evidence and impact; whether the active codebook can be undone |
 | `apply-codebook-revision` | Make the proposal active (snapshot first), mark corrections learned, start a targeted re-sort run (`scope: "revision"`) |
 | `reject-codebook-revision` / `undo-codebook-revision` | Decline a proposal, or restore the board exactly as before the last applied revision (user moves since are kept) |
+| `get-priorities` / `set-priority-weights` | SQL-only ranking of feedback themes with a per-metric breakdown; internal themes listed apart; tunable weights |
+| `save-duplicate-groups` / `list-duplicate-groups` | Validated duplicate groups per theme (priorities count each group once) |
+| `get-brief-context` / `save-brief` / `get-brief` | Insight Briefs: one-call context, verbatim-only evidence, SQL facts attached by the server |
+| `export-markdown` | A brief, or a board report, as Markdown (deterministic) |
+| `file-github-issue` | Post a brief as a GitHub issue (`needsApproval` unless `dryRun`) |
+| `ingest-github-issue` | Add one issue from a GitHub `issues` webhook payload (used by the webhook automation) |
+| `get-digest-data` / `save-digest` | Weekly digest facts from SQL; save + Inbox notification (used by the scheduled automation) |
 | `seed-demo-board` | Developer setup only (hidden from the agent): demo board from `BuilderIO/agent-native` |
 
 Sorting is agent work, not action work (framework rule: no model calls in actions). The main agent follows the shared skill `skills/feedback-synthesis/SKILL.md` and spawns `agents/theme-sorter.md` sub-agents; both ship from `server/agent-resources/` via `server/plugins/agent-resources.ts`. Quotes are stored only as spans into `noteText()` (title + blank line + body) after `findQuote()` confirms they are verbatim.

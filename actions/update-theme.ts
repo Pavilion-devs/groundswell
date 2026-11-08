@@ -18,6 +18,7 @@ export default defineAction({
     excludeRules: z.array(z.string().trim().min(3).max(200)).max(6).optional().describe("Replaces the exclude rules"),
     x: z.coerce.number().optional().describe("Board x position"),
     y: z.coerce.number().optional().describe("Board y position"),
+    internal: z.preprocess((v) => (v === undefined ? undefined : v === true || v === "true"), z.boolean().optional()).describe("True when the theme is not product feedback (CI trackers, internal tasks, spam): it stays on the board but is ranked apart in priorities and skipped by briefs"),
   }),
   outputSchema: z.object({ id: z.string(), name: z.string(), changed: z.array(z.string()), message: z.string() }),
   errors: themeErrors,
@@ -31,7 +32,13 @@ export default defineAction({
       const clash = themes.find((t) => t.id !== id && t.name.toLowerCase() === (changes.name as string).toLowerCase());
       if (clash) return themeErrors.noWrite(`A theme called "${clash.name}" already exists.`, "bad_request");
     }
-    await getDb().update(schema.themes).set({ ...changes, updatedAt: nowIso() }).where(eq(schema.themes.id, id));
+    // Moving a theme on the canvas is layout, not a content edit: it keeps updatedAt
+    // (undo-codebook-revision treats a content edit after a revision as a conflict).
+    const contentEdit = changed.some((k) => k !== "x" && k !== "y");
+    await getDb()
+      .update(schema.themes)
+      .set({ ...changes, ...(contentEdit ? { updatedAt: nowIso() } : {}) })
+      .where(eq(schema.themes.id, id));
     await touchBoard(theme.boardId);
     const name = typeof changes.name === "string" ? changes.name : theme.name;
     return { id, name, changed, message: `Updated "${name}" (${changed.join(", ")}).` };

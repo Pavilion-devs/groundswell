@@ -166,13 +166,13 @@ Indexes on `(board_id, theme_id)` for placements, `(board_id, external_id)` uniq
 `move-notes`, `pin-note`, `create-theme`, `rename-theme`, `update-theme-definition`, `merge-themes`, `split-theme`, `delete-theme`, `layout-themes`, `set-priority-weights`
 
 **Reads**
-`get-board`, `list-themes`, `get-theme`, `search-notes`, `get-note`, `get-priorities`, `get-codebook`, `get-codebook-diff`, `view-screen`
+`get-board`, `list-notes`, `get-note`, `get-priorities`, `list-duplicate-groups`, `get-codebook`, `get-codebook-revision`, `view-screen`
 
 **Output**
-`generate-brief`, `file-github-issue` (approval required), `export-markdown`, `share-board`
+`get-brief-context`, `save-brief`, `get-brief`, `file-github-issue` (approval required), `export-markdown`, `share-board`
 
 **Automation hooks**
-`ingest-webhook-issue`, `weekly-digest`
+`ingest-github-issue` (webhook automation), `get-digest-data` + `save-digest` (scheduled automation)
 
 ---
 
@@ -252,7 +252,7 @@ Each phase ends with a working, demoable app.
   - Engine bug found on the way: sub-agent runs build the engine without a key, so `server/lib/meta-engine.ts` now resolves `META_API_KEY` per request through the secret store (registered with `registerRequiredSecret`). In sub-agent runs a store lookup can fail and still return the deployment value; both the Meta key and `getGithubToken` now use the value when one comes back.
   - **Verified:** "Re-sort the Unsorted notes" → `mode: team` → 2 parallel `theme-sorter` sub-agents → 42/42 processed, 15 into themes (15/15 quotes verified, 0 rejected), full written report, 1m 51s. **Board: 313 of 340 notes in 16 themes (92%), every themed note quoted, 8% Unsorted.**
   - Cosmetic: the team card list can show a stale duplicate "sorter slice 0/2" label while running (framework UI; our Phase 6 board will show runs itself).
-- **Follow-ups:** a stale-run reaper (a run whose agent dies stays `running`; closing it with `finish-sort-run` works); a theme flag for non-feedback themes (e.g. "Maintainer and CI trackers", 71 notes) so priorities and briefs skip them (Phase 4).
+- **Follow-ups:** a stale-run reaper (a run whose agent dies stays `running`; closing it with `finish-sort-run` works); a theme flag for non-feedback themes so priorities and briefs skip them (done in Phase 4: `themes.internal`).
 
 ### Phase 3 — Teach by dragging (engine)
 - [x] Corrections log (`move-notes` records them; `list-corrections` reads them with note, from/to theme and the user's reason)
@@ -275,11 +275,23 @@ Each phase ends with a working, demoable app.
 - Chat-only path verified too: "Learn from my corrections" → same proposal in 54 s → user says "Yes, apply it." → the agent applied v3, ran 3 sorters (2m 47s) and reported 23 moves in 9 route groups, every count matching SQL. 9 of the 10 "Design E2E triage" notes are now in the Design bugs theme (3 taught + 6 learned); only the test-locator one stayed. **Board: 310 of 340 in themes, every themed note quoted, 9% Unsorted.**
 
 ### Phase 4 — Prioritize & ship (engine)
-- [ ] Priority score with tunable weights (`get-priorities`, `set-priority-weights`)
-- [ ] `detect-duplicates`
-- [ ] `generate-brief` (validated quotes), `file-github-issue` with approval, `export-markdown`
-- [ ] Webhook automation for new issues (`ingest-webhook-issue`); weekly digest job
-- **Done when:** a theme becomes a filed issue with real quotes, and a new issue sorts itself onto the board.
+- [x] Priorities from SQL only: `get-priorities` (volume with duplicates collapsed, distinct reporters, engagement = comments + 2 × reactions, recency within 30 days of the board's newest note; each normalised against the biggest feedback theme, weighted, with a per-metric breakdown), `set-priority-weights` (0-5 each, reset)
+- [x] Internal themes (`themes.internal`, migration v5): not product feedback, kept on the board, listed apart without a rank; set via `update-theme` / `create-theme` / `save-codebook`, carried through revisions and splits
+- [x] Duplicates: `save-duplicate-groups` (validated: notes in the theme, canonical included, ≥2 per group, no note in two groups; replaces the theme's groups), `list-duplicate-groups`; counted by where notes sit now, so groups survive codebook revisions
+- [x] Insight Briefs: `get-brief-context` (one call: definition, SQL facts, duplicate groups, most-engaged notes with text and verified quotes), `save-brief` (every quote verbatim or nothing is saved; ≥2 distinct reports; facts computed by the server and stored as `briefs.metrics`), `get-brief`
+- [x] `export-markdown` (a brief, or a board report with the priority table) and `file-github-issue` (`needsApproval` unless `dryRun`; target defaults to the board's GitHub source; files once and stores the issue URL)
+- [x] New issues sort themselves: `ingest-github-issue` maps a GitHub `issues` webhook payload exactly like an import (skips PRs, bots, deletions; idempotent; scoped to boards the caller can edit), driven by a framework webhook automation the agent creates (skill step 11)
+- [x] Weekly digest: `get-digest-data` (SQL facts for the period) and `save-digest` (server recounts, stores in `digests`, posts to the Inbox with an idempotency key), driven by a scheduled automation (`0 9 * * 1`)
+- [x] Skill steps 7-11, system prompt, `nextStep` on every Phase 4 result that requires the written reply; 9 new unit tests (36 total); debug page "Prioritize and ship" panel
+- **Done when:** a theme becomes a filed issue with real quotes, and a new issue sorts itself onto the board. ✅ (filing verified as a dry run; a real filing waits for the user's approval and a target repo)
+
+**Phase 4 results on the real board (2026-11-08, Meta Muse Spark 1.3)**
+- "What should we fix first?" → ranked answer in 22 s, every number matching SQL, and the agent itself flagged "Maintainer and CI trackers" (#5 with 54 notes but 5 reporters) as internal-looking. Marked it and "Design nightly shards" internal; new top 3: Wants hooks (91.1), Agent runs stall (86.2), Docs 404s (74).
+- "Find the duplicates in Docs 404s, then write a brief" → 3 duplicate groups (30 notes = 27 distinct problems) and the brief "Docs 404s and fresh workspaces fail to install": 4 verbatim quotes from 4 reporters with issue links, SQL facts, one next step (2m 25s). `file-github-issue` dry run shows the exact issue for BuilderIO/agent-native; nothing posted.
+- Webhook: the agent created `groundswell-new-issues-…` from one chat message. Replayed real issue #8776 (removed from the board first, re-delivered as a GitHub `issues` payload): ingested, sorted in its own 1-note run, quote verified, no duplicate on re-delivery. It landed in "Security and access-control gaps" (0.9); before the replay it sat in "Multi-app workspace and Dispatch problems" (0.6). Both fit an SSRF-guard-in-a-workspace bug.
+- Weekly digest: the agent created the Monday schedule and ran it once: "Week of Nov 1: hooks requests lead 26 new notes", numbers matching `get-digest-data`, posted to the Inbox.
+- **Bugs found and fixed:** (1) the engine set in `agent-native.config.ts` never reached the server (it is build config), so background automations fell back to Anthropic; the Meta engine is now set with runtime `defineAppConfig` in `server/lib/meta-engine.ts`. (2) Local background work dispatched to port 3000; `.env` now sets `AGENT_NATIVE_SELF_DISPATCH_URL=http://localhost:8080` (deploys use their real URL). (3) Score rounding gave 100.1 and one bad weight discarded all weights (caught by tests). (4) The digest counted an undone revision as applied. (5) Muse sometimes ends a turn with "Done": the Phase 4 results now carry a `nextStep` that requires the written reply.
+- **Open:** a real `file-github-issue` run needs the user's go-ahead and a sandbox repo (filing into BuilderIO/agent-native would be a public post on their behalf). The "Bugs in Plan…" theme is a candidate for a split by app.
 
 ### Phase 5 — UI vision review (with the user, before building UI)
 - [ ] Study references together: Builder's own Agent-Native apps (Design, Plan, Slides at agent-native.com/apps) for framework-native patterns, plus canvas/insight tools (FigJam, Miro, tldraw, Dovetail, Linear) for interaction ideas

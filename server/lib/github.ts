@@ -252,3 +252,88 @@ function httpError(res: Response, opts: FetchIssuesOptions): GithubError {
   // Never echo the response body: it can contain request details.
   return new GithubError(`GitHub returned ${res.status} for ${repo}.`, "upstream");
 }
+
+// ----------------------------------------------------------------- Filing issues
+
+export interface NewIssue extends RepoRef {
+  title: string;
+  body: string;
+  labels?: string[];
+}
+
+/** Open an issue with the user's token. Returns its number and URL. */
+export async function createIssue(issue: NewIssue, token: string): Promise<{ number: number; url: string }> {
+  const repo = `${issue.owner}/${issue.repo}`;
+  const res = await fetch(`https://api.github.com/repos/${issue.owner}/${issue.repo}/issues`, {
+    method: "POST",
+    headers: { ...baseHeaders(token), "Content-Type": "application/json" },
+    body: JSON.stringify({ title: issue.title, body: issue.body, ...(issue.labels?.length ? { labels: issue.labels } : {}) }),
+  });
+  if (res.status === 403 && res.headers.get("x-ratelimit-remaining") !== "0") {
+    throw new GithubError(`The saved GitHub token cannot open issues in ${repo}. It needs Issues: write access to that repo.`, "unauthorized");
+  }
+  if (res.status === 410) throw new GithubError(`Issues are turned off for ${repo}.`, "not_found");
+  if (!res.ok) throw httpError(res, { owner: issue.owner, repo: issue.repo, state: "open", excludeBots: false, max: 0, token });
+  const json = (await res.json()) as { number?: number; html_url?: string };
+  if (typeof json.number !== "number" || typeof json.html_url !== "string") throw new GithubError("GitHub did not return the new issue.", "upstream");
+  return { number: json.number, url: json.html_url };
+}
+
+// ----------------------------------------------------------------- Webhooks
+
+export type WebhookIssueResult =
+  | { ok: true; repo: RepoRef; action: string; note: { externalId: string; url: string | null; title: string | null; body: string; author: string | null; authorAvatar: string | null; reactions: number; comments: number; labels: string[]; state: string | null; sourceCreatedAt: string | null } }
+  | { ok: false; reason: string };
+
+/**
+ * Read a GitHub `issues` webhook payload ({ action, issue, repository }) into
+ * a note, mapped exactly like an import so a webhook and a sync agree.
+ * Pull requests, bot authors and deletions are skipped with a reason.
+ */
+export function issueFromWebhook(payload: unknown): WebhookIssueResult {
+  const p = payload as {
+    action?: unknown;
+    issue?: Record<string, unknown>;
+    repository?: { full_name?: unknown; name?: unknown; owner?: { login?: unknown } };
+  } | null;
+  const issue = p?.issue;
+  if (!issue || typeof issue !== "object") return { ok: false, reason: "The payload has no issue (expected a GitHub issues webhook)." };
+  const action = typeof p.action === "string" ? p.action : "opened";
+  if (action === "deleted" || action === "transferred") return { ok: false, reason: `Issue was ${action}; nothing to add.` };
+  if (issue.pull_request) return { ok: false, reason: "This is a pull request, not an issue." };
+  const user = issue.user as { login?: unknown; type?: unknown; avatar_url?: unknown } | undefined;
+  if (user?.type === "Bot" || (typeof user?.login === "string" && user.login.endsWith("[bot]"))) {
+    return { ok: false, reason: "Opened by a bot; bots are not feedback." };
+  }
+  const fullName =
+    typeof p.repository?.full_name === "string"
+      ? p.repository.full_name
+      : typeof issue.repository_url === "string"
+        ? issue.repository_url.replace(/^https:\/\/api\.github\.com\/repos\//, "")
+        : null;
+  const repo = fullName ? parseRepo(fullName) : null;
+  if (!repo) return { ok: false, reason: "Could not tell which repo the issue belongs to." };
+  if (typeof issue.number !== "number" || typeof issue.title !== "string") return { ok: false, reason: "The issue has no number or title." };
+  const labels = Array.isArray(issue.labels)
+    ? issue.labels.map((l) => (typeof l === "string" ? l : (l as { name?: unknown })?.name)).filter((n): n is string => typeof n === "string")
+    : [];
+  const reactions = (issue.reactions as { total_count?: unknown } | undefined)?.total_count;
+  return {
+    ok: true,
+    repo,
+    action,
+    note: {
+      externalId: String(issue.number),
+      url: typeof issue.html_url === "string" ? issue.html_url : null,
+      title: issue.title,
+      body: typeof issue.body === "string" ? issue.body : "",
+      author: typeof user?.login === "string" ? user.login : null,
+      authorAvatar: typeof user?.avatar_url === "string" ? user.avatar_url : null,
+      reactions: typeof reactions === "number" ? reactions : 0,
+      comments: typeof issue.comments === "number" ? issue.comments : 0,
+      labels,
+      state: typeof issue.state === "string" ? issue.state : null,
+      sourceCreatedAt: typeof issue.created_at === "string" ? issue.created_at : null,
+    },
+  };
+}

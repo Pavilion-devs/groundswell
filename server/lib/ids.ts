@@ -1,7 +1,7 @@
 import { createHash, randomUUID } from "node:crypto";
 
 /** Prefixed random id, e.g. `brd_3f2a…`. Prefixes make ids readable in logs. */
-export function newId(prefix: "brd" | "src" | "note" | "cb" | "thm" | "cor" | "dup" | "brf" | "run"): string {
+export function newId(prefix: "brd" | "src" | "note" | "cb" | "thm" | "cor" | "dup" | "brf" | "run" | "dgs"): string {
   return `${prefix}_${randomUUID().replace(/-/g, "").slice(0, 20)}`;
 }
 

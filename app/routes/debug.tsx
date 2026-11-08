@@ -150,6 +150,8 @@ function BoardDebug({ boardId }: { boardId: string }) {
 
       <TeachPanel boardId={boardId} />
 
+      <ShipPanel boardId={boardId} />
+
       <section>
         <input
           className="mb-2 w-80 border bg-background px-2 py-1"
@@ -364,5 +366,141 @@ function TeachPanel({ boardId }: { boardId: string }) {
       )}
       {status && <p className="mt-2 text-xs">{status}</p>}
     </section>
+  );
+}
+
+/**
+ * Prioritize and ship, plainly: the SQL-ranked themes with their breakdown,
+ * an internal toggle, and per-theme duplicates / brief / export / issue
+ * preview. AI work (duplicates, briefs) is handed to the agent.
+ */
+function ShipPanel({ boardId }: { boardId: string }) {
+  const { data: priorities } = useActionQuery("get-priorities", { boardId });
+  const [themeKey, setThemeKey] = useState<string>("");
+  const [status, setStatus] = useState("");
+  const toggleInternal = useActionMutation("update-theme", {
+    onSuccess: (r) => setStatus(r.message),
+    onError: (e) => setStatus(String((e as Error).message ?? e)),
+  });
+  const chosen = priorities?.themes.find((t) => t.key === themeKey) ?? null;
+
+  return (
+    <section className="border-t pt-4">
+      <h3 className="font-bold">Prioritize and ship</h3>
+      {priorities && (
+        <p className="text-xs text-muted-foreground">
+          weights: volume {priorities.weights.volume} · reporters {priorities.weights.reporters} · engagement{" "}
+          {priorities.weights.engagement} · recency {priorities.weights.recency} · recent = since{" "}
+          {priorities.referenceDate?.slice(0, 10) ?? "?"} minus 30 days
+        </p>
+      )}
+      <table className="mt-2 w-full border-collapse text-xs">
+        <thead>
+          <tr className="text-left">
+            <th className="border-b p-1">#</th>
+            <th className="border-b p-1">theme</th>
+            <th className="border-b p-1">score</th>
+            <th className="border-b p-1">notes / distinct</th>
+            <th className="border-b p-1">reporters</th>
+            <th className="border-b p-1">engagement</th>
+            <th className="border-b p-1">recent</th>
+            <th className="border-b p-1">internal</th>
+          </tr>
+        </thead>
+        <tbody>
+          {priorities?.themes.map((t) => (
+            <tr key={t.themeId} className={t.key === themeKey ? "bg-muted" : ""}>
+              <td className="border-b p-1">{t.rank ?? "–"}</td>
+              <td className="border-b p-1">
+                <button className="underline" onClick={() => setThemeKey(t.key === themeKey ? "" : t.key)}>
+                  {t.name}
+                </button>
+              </td>
+              <td className="border-b p-1" title={JSON.stringify(t.breakdown)}>
+                {t.score}
+              </td>
+              <td className="border-b p-1">
+                {t.notes} / {t.uniqueProblems}
+              </td>
+              <td className="border-b p-1">{t.reporters}</td>
+              <td className="border-b p-1">{t.engagement}</td>
+              <td className="border-b p-1">{t.recent}</td>
+              <td className="border-b p-1">
+                <input
+                  type="checkbox"
+                  checked={t.internal}
+                  onChange={() => toggleInternal.mutate({ id: t.themeId, internal: !t.internal })}
+                />
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      {status && <p className="mt-1 text-xs">{status}</p>}
+      {chosen && <ThemeShip boardId={boardId} themeKey={chosen.key} themeName={chosen.name} />}
+    </section>
+  );
+}
+
+function ThemeShip({ boardId, themeKey, themeName }: { boardId: string; themeKey: string; themeName: string }) {
+  const { data: dupes } = useActionQuery("list-duplicate-groups", { boardId, theme: themeKey });
+  const { data: brief } = useActionQuery("get-brief", { boardId, theme: themeKey });
+  const [preview, setPreview] = useState("");
+  const dryRun = useActionMutation("file-github-issue", {
+    onSuccess: (r) => setPreview(`${r.message}\n\nrepo: ${r.repo}\ntitle: ${r.title}`),
+    onError: (e) => setPreview(String((e as Error).message ?? e)),
+  });
+  const ask = (message: string) =>
+    sendToAgentChat({ message, context: JSON.stringify({ boardId, theme: themeKey }), submit: true, openSidebar: true });
+
+  return (
+    <div className="mt-3 border p-2">
+      <p className="font-bold">{themeName}</p>
+      <p className="text-xs">
+        <button className="underline" onClick={() => ask(`Find the duplicate reports in the "${themeName}" theme on this board.`)}>
+          ask the agent to find duplicates
+        </button>{" "}
+        ·{" "}
+        <button className="underline" onClick={() => ask(`Write an Insight Brief for the "${themeName}" theme on this board.`)}>
+          ask the agent to write a brief
+        </button>
+      </p>
+      <p className="mt-2 text-xs">duplicate groups: {dupes?.groups.length ?? 0}</p>
+      <ul className="list-disc pl-6 text-xs">
+        {dupes?.groups.map((g) => (
+          <li key={g.id}>
+            {g.summary} ({g.members.length} notes; canonical: {g.canonical.title})
+          </li>
+        ))}
+      </ul>
+      {brief?.brief ? (
+        <div className="mt-2">
+          <p className="text-xs">
+            brief {brief.brief.id} · {brief.brief.createdAt.slice(0, 16)}
+            {brief.brief.filedIssueUrl ? (
+              <>
+                {" "}
+                · filed{" "}
+                <a className="underline" href={brief.brief.filedIssueUrl} target="_blank" rel="noreferrer">
+                  issue
+                </a>
+              </>
+            ) : null}{" "}
+            ·{" "}
+            <button className="underline" onClick={() => void navigator.clipboard?.writeText(brief.brief?.markdown ?? "")}>
+              copy markdown
+            </button>{" "}
+            ·{" "}
+            <button className="underline" onClick={() => dryRun.mutate({ boardId, theme: themeKey, dryRun: true })}>
+              preview issue (dry run)
+            </button>
+          </p>
+          <pre className="mt-1 max-h-96 overflow-auto whitespace-pre-wrap border p-2 text-xs">{brief.brief.markdown}</pre>
+          {preview && <pre className="mt-1 whitespace-pre-wrap text-xs">{preview}</pre>}
+        </div>
+      ) : (
+        <p className="mt-2 text-xs text-muted-foreground">No brief yet.</p>
+      )}
+    </div>
   );
 }

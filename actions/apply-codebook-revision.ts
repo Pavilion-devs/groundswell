@@ -88,6 +88,7 @@ export default defineAction({
       definition: t.definition,
       includeRules: t.includeRules,
       excludeRules: t.excludeRules,
+      internal: t.internal,
       color: t.color ?? nextColor(),
       x: t.x,
       y: t.y,

@@ -93,6 +93,8 @@ export default defineAction({
           definition: p.definition,
           includeRules: p.includeRules ?? [],
           excludeRules: p.excludeRules ?? [],
+          // Parts of an internal theme stay internal.
+          internal: theme.internal,
           color,
           x: theme.x,
           y: theme.y,

@@ -89,6 +89,7 @@ export function toParentThemes(themes: Theme[]): ParentTheme[] {
     definition: t.definition,
     includeRules: asStringArray(t.includeRules),
     excludeRules: asStringArray(t.excludeRules),
+    internal: t.internal,
     color: t.color,
     x: t.x,
     y: t.y,

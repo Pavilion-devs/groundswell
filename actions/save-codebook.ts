@@ -23,6 +23,7 @@ const themeSchema = z.object({
     .max(6)
     .optional()
     .describe('Near-misses that belong elsewhere, ideally naming the other theme ("Billing errors go to Payments")'),
+  internal: z.preprocess((v) => (v === undefined ? undefined : v === true || v === "true"), z.boolean().optional()).describe("True when the theme is not product feedback (CI trackers, internal tasks, spam): it stays on the board but is ranked apart in priorities and skipped by briefs"),
 });
 
 export default defineAction({
@@ -75,6 +76,7 @@ export default defineAction({
         definition: t.definition,
         includeRules: t.includeRules ?? [],
         excludeRules: t.excludeRules ?? [],
+        internal: t.internal ?? prior?.internal ?? false,
         color,
         x: prior?.x ?? null,
         y: prior?.y ?? null,

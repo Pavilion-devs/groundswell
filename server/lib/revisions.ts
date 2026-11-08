@@ -43,6 +43,7 @@ export interface ThemeShape {
 
 export interface ParentTheme extends ThemeShape {
   key: string;
+  internal: boolean;
   color: string | null;
   x: number | null;
   y: number | null;
@@ -98,7 +99,7 @@ export function planRevision(parent: ParentTheme[], changes: Change[], allowedCo
       const key = uniqueKey(themeKey(c.name), taken);
       taken.add(key);
       const after: ThemeShape = { name: c.name, definition: c.definition, includeRules: c.includeRules ?? [], excludeRules: c.excludeRules ?? [] };
-      next.set(key, { ...after, key, color: null, x: null, y: null, origin: "added" });
+      next.set(key, { ...after, key, internal: false, color: null, x: null, y: null, origin: "added" });
       diff.push({ op: "add", key, before: null, after: shape(after), why: c.why, basedOn: c.basedOn });
       return;
     }
