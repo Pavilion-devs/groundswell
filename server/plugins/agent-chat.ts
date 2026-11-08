@@ -5,6 +5,7 @@ import {
 } from "@agent-native/core/server";
 
 import actionsRegistry from "../../.generated/actions-registry.js";
+import "../lib/meta-engine.js";
 import {
   searchConversationReferences,
   validateConversationReferences,

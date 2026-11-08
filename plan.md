@@ -192,6 +192,7 @@ Indexes on `(board_id, theme_id)` for placements, `(board_id, external_id)` uniq
 
 - Scaffold: `npx @agent-native/core@latest create groundswell --standalone --template chat`, then move into this folder root.
 - React + React Router (template), Nitro server, Drizzle over PGlite locally / Neon Postgres in production.
+- Agent model: Meta `muse-spark-1.3` via the `meta` engine (`server/lib/meta-engine.ts`, `META_API_KEY`) while Anthropic credits are out; Claude ids stay in `server/lib/models.ts` and come back with `agent.engine: "anthropic"`.
 - GitHub data via REST API (`GITHUB_TOKEN` optional for higher rate limits; required for filing issues).
 - Deploy: Vercel (or Netlify) + Neon. Public demo identity mode so judges land in the app without signing up; destructive actions disabled in demo mode.
 - Pre-seeded demo board on `BuilderIO/agent-native` so judges see the result without spending tokens. Live imports in the public demo capped (e.g. ≤300 issues) to control cost.
@@ -240,8 +241,16 @@ Each phase ends with a working, demoable app.
 - One chat message ("Sort my Agent-Native feedback board into themes") → codebook of 13 themes → 4 parallel `theme-sorter` sub-agents → 300+ notes placed in about 2.5 minutes.
 - Iteration 1 → 2, measured on the same 340 issues: notes in a theme 60% → **84%**; themed notes with a verified quote 33% → **100%** (0 quotes rejected). Fixes: required quotes with `quoteMisses` retry, and the skill's guidance for non-feedback trackers.
 - Bug found and fixed: colour assignment looped forever with more than 12 themes (hung the server); now a bounded least-used picker with tests.
-- **Open (blocked on Anthropic credits running out mid-run):** finish the last 33 notes; exercise the coverage loop (`scope: "unsorted"`) end to end; ask the agent to split/merge a selection from chat (verified via CLI only so far).
-- **Follow-ups:** a stale-run reaper (a run whose agent dies stays `running`; closing it with `finish-sort-run` works); a theme flag for non-feedback themes (e.g. "Maintainer and CI trackers", 73 notes) so priorities and briefs skip them (Phase 4).
+- **Closed on Meta Muse Spark (2026-11-08).** Anthropic credits ran out, so the app's agent now runs on `muse-spark-1.3` through the Meta Model API (OpenAI-compatible, `https://api.meta.ai/v1`), registered as the `meta` engine in `server/lib/meta-engine.ts` and selected in `agent-native.config.ts`. Switching back is a one-line config change.
+  - Last 33 notes: sorted from chat in 1m 12s, 26 into themes and 7 to Unsorted. Board: 285 of 340 in themes, 16% Unsorted.
+  - Coverage loop (`scope: "unsorted"`), run on request because Unsorted was under the 20% trigger: 2 new themes ("Native Resources and Skills break", "Framework data layer migrations and stores break"), 13 of 55 Unsorted notes moved in, 13/13 quotes verified, 0 rejected. Board: **298 of 340 in themes (88%), every themed note has a verified quote**, 12% Unsorted.
+  - Selection from chat: selected 8 "Design nightly shard N/8" notes on the debug page and said "split these". The agent read the selection via `view-screen` and split exactly those 8 into "Design nightly shards hit 37-minute cap" in 23 s (SQL-verified).
+- **Muse Spark findings:** it followed the skill and tool contracts well, and the server guards held: one `get-note` call with a mistyped id was rejected, as designed. Three gaps to close:
+  - It sorted 55 notes itself instead of spawning sorters (skill says spawn above 40), so agent teams on Muse are untested.
+  - The coverage turn ended without its written report.
+  - The status line can sit on "Working" for ~2 min while it reasons.
+  Tighten the skill wording if we stay on Muse.
+- **Follow-ups:** a stale-run reaper (a run whose agent dies stays `running`; closing it with `finish-sort-run` works); a theme flag for non-feedback themes (e.g. "Maintainer and CI trackers", 71 notes) so priorities and briefs skip them (Phase 4).
 
 ### Phase 3 — Teach by dragging (engine)
 - [ ] Corrections log, `propose-codebook-revision` (structured diff), `apply-codebook-revision`, undo

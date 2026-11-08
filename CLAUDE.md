@@ -31,10 +31,12 @@ Keep model ids in one config module (`server/lib/models.ts`):
 - Revisions, briefs: `claude-sonnet-5-5`
 - Classification, re-sort, duplicates: `claude-haiku-5-5`
 
+**Current agent engine (since 2026-11-08): Meta `muse-spark-1.3`.** Anthropic credits ran out, so `agent-native.config.ts` sets `agent: { engine: "meta" }`. The `meta` engine is registered in `server/lib/meta-engine.ts` (OpenAI-compatible Meta Model API, key from `META_API_KEY`). To go back to Claude, set `engine: "anthropic"` and pick the model in the chat's model picker.
+
 ## Environment
 
 - Node **≥ 22.22** and pnpm (machine currently has Node 20.20; upgrade before scaffolding).
-- LLM: Builder.io connect or `ANTHROPIC_API_KEY` in `.env`.
+- LLM: `META_API_KEY` in `.env` (current engine), or `ANTHROPIC_API_KEY` / Builder.io connect.
 - `GITHUB_TOKEN` (optional for import rate limits, required for filing issues).
 - Never commit `.env`, tokens or personal data.
 
