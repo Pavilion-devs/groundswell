@@ -115,7 +115,7 @@ export const codebooks = pgTable(
       .references(() => boards.id, { onDelete: "cascade" }),
     version: integer("version").notNull(),
     status: text("status", {
-      enum: ["active", "proposed", "archived", "rejected"],
+      enum: ["active", "proposed", "archived", "rejected", "undone"],
     }).notNull(),
     createdBy: text("created_by", { enum: ["agent", "user"] }).notNull(),
     /** Why this version exists (agent summary of the revision). */
@@ -123,6 +123,13 @@ export const codebooks = pgTable(
     /** For proposals: the structured diff against the parent version. */
     diff: jsonb("diff"),
     parentId: text("parent_id"),
+    /** When a proposed revision was applied (it became active). */
+    appliedAt: text("applied_at"),
+    /**
+     * Every placement on the board just before this revision was applied
+     * (theme by key), so undo can restore the board exactly.
+     */
+    restoreSnapshot: jsonb("restore_snapshot"),
     createdAt: text("created_at").notNull().default(now),
     // Tenant scope copied from the board (see note at top).
     ownerEmail: text("owner_email").notNull().default("local@localhost"),

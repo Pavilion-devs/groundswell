@@ -160,7 +160,7 @@ Indexes on `(board_id, theme_id)` for placements, `(board_id, external_id)` uniq
 `create-board`, `add-github-source`, `import-csv`, `import-text`, `sync-source`, `list-sources`
 
 **Pipeline**
-`draft-codebook`, `classify-notes`, `propose-codebook-revision`, `apply-codebook-revision`, `resort-notes`, `detect-duplicates`, `get-run-status`
+`sample-notes`, `save-codebook`, `start-sort-run`, `get-notes-for-sorting`, `place-notes`, `finish-sort-run`, `list-corrections`, `propose-codebook-revision`, `get-codebook-revision`, `apply-codebook-revision`, `reject-codebook-revision`, `undo-codebook-revision`, `detect-duplicates`, `get-run-status`
 
 **Board edits (shared by UI and agent)**
 `move-notes`, `pin-note`, `create-theme`, `rename-theme`, `update-theme-definition`, `merge-themes`, `split-theme`, `delete-theme`, `layout-themes`, `set-priority-weights`
@@ -255,9 +255,24 @@ Each phase ends with a working, demoable app.
 - **Follow-ups:** a stale-run reaper (a run whose agent dies stays `running`; closing it with `finish-sort-run` works); a theme flag for non-feedback themes (e.g. "Maintainer and CI trackers", 71 notes) so priorities and briefs skip them (Phase 4).
 
 ### Phase 3 — Teach by dragging (engine)
-- [ ] Corrections log, `propose-codebook-revision` (structured diff), `apply-codebook-revision`, undo
-- [ ] Targeted `resort-notes`; pinned notes respected; record which notes moved (drives the ripple later)
-- **Done when:** recording 3 corrections produces a sensible codebook diff and re-sorts related notes correctly.
+- [x] Corrections log (`move-notes` records them; `list-corrections` reads them with note, from/to theme and the user's reason)
+- [x] `propose-codebook-revision`: structured diff (update / add / remove), every change cites the corrections behind it, server-validated (keys exist, one change per theme, no no-op updates, unique names, ≥2 themes, cited corrections must be pending); newer proposal supersedes an open one
+- [x] `get-codebook-revision` (before/after diff, evidence, impact estimate, undoable), `apply-codebook-revision`, `reject-codebook-revision`, `undo-codebook-revision`
+- [x] Targeted re-sort (`scope: "revision"`): unpinned notes in the touched themes (changed themes plus the from/to themes of the corrections) and Unsorted; pinned notes never move; closed runs refuse writes so an undo cannot be overwritten by late sorters
+- [x] Ripple data: `finish-sort-run` on a revision re-sort compares against the pre-revision snapshot, stores `movedNoteIds` on the run and returns moves plus `moveGroups` (exact counts per route)
+- [x] Exact undo: applying snapshots every placement by theme key (`codebooks.restore_snapshot`, migration v4); undo restores it, keeps notes the user moved after the revision, stops a running re-sort, re-opens the corrections, and refuses if themes were edited since
+- [x] Hand-off between UI and agent: the debug page applies on "approve" and hands the re-sort to the agent with `sendToAgentChat`; `get-run-status` returns `sorterBrief` and `nextStep` for any open sort run
+- [x] Skill step 6 "Learn from corrections"; system prompt; 8 new unit tests (27 total)
+- **Done when:** recording 3 corrections produces a sensible codebook diff and re-sorts related notes correctly. ✅
+
+**Phase 3 results on the real board (2026-11-08, Meta Muse Spark 1.3)**
+- Taught with 3 moves: three "Design E2E triage" issues that describe real Design editor bugs, moved from "Maintainer and CI trackers" to "Bugs in Plan, Content, Calendar, Mail and Design apps", reason "E2E triage reports that describe a real Design editor bug are product bugs, not CI noise".
+- Proposal in 39 s (UI button) and 54 s (chat), same pattern both times: two `update`s that sharpen both definitions and add exclude rules naming the sibling theme; every change cites all 3 corrections; impact 117 notes.
+- Re-sort (3 parallel sorters, 2m 11s): 25 notes moved. 5 of the 7 untaught "Design E2E triage" notes followed on their own; the one about a test locator ("sidebar New chat locator matches two buttons") correctly stayed in Maintainer; 3 other "Design E2E:" product-behaviour notes also moved; several "[Framework] Refactor" tasks moved to the theme of the problem they fix. Pinned notes untouched; every themed note quoted.
+- Side effect worth knowing: the sharper "Bugs in Plan…" theme no longer claims apps it does not name (CRM, Assets, a generic error screen), so 6 such notes went to Unsorted. Honest, and a hint that this theme wants a split (a good demo follow-up: "split Bugs by app").
+- Undo verified exact: a fingerprint of all 340 placements after undo matched the pre-revision snapshot; v1 active again, corrections pending again.
+- Found and fixed while testing: the agent miscounted a move group (said 9, SQL said 8), so `finish-sort-run` now returns `moveGroups` with exact counts and the report must quote them.
+- Chat-only path verified too: "Learn from my corrections" → same proposal in 54 s → user says "Yes, apply it." → the agent applied v3, ran 3 sorters (2m 47s) and reported 23 moves in 9 route groups, every count matching SQL. 9 of the 10 "Design E2E triage" notes are now in the Design bugs theme (3 taught + 6 learned); only the test-locator one stayed. **Board: 310 of 340 in themes, every themed note quoted, 9% Unsorted.**
 
 ### Phase 4 — Prioritize & ship (engine)
 - [ ] Priority score with tunable weights (`get-priorities`, `set-priority-weights`)

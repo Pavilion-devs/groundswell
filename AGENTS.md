@@ -55,10 +55,15 @@ Groundswell turns feedback into a board of themes shaped by the user and the age
 | `start-sort-run` | Open a sort run split into slices for parallel `theme-sorter` sub-agents |
 | `get-notes-for-sorting` | Next batch of not-yet-sorted notes in one slice (stable hash partition) |
 | `place-notes` | Atomic batch placement; validates theme keys and verbatim quotes; never touches pinned notes |
-| `finish-sort-run` | Close a sort run and return proof (placed / unsorted / quotes / remaining) |
+| `finish-sort-run` | Close a sort or revision re-sort and return proof (placed / unsorted / quotes / remaining; moved notes and `moveGroups` for a re-sort) |
 | `move-notes` | The user's decision (drag): pins notes and records corrections for learning |
 | `create-theme` / `update-theme` / `delete-theme` | Edit themes in the active codebook (delete returns notes to Unsorted) |
 | `merge-themes` / `split-theme` | Fold themes together, or split one into sharper themes by note ids |
+| `list-corrections` | The user's moves of agent-placed notes, with from/to theme and reason; pending ones feed the next revision |
+| `propose-codebook-revision` | Structured diff (update / add / remove) learned from corrections; each change cites its corrections; nothing changes until applied |
+| `get-codebook-revision` | The open proposal as a before/after diff with evidence and impact; whether the active codebook can be undone |
+| `apply-codebook-revision` | Make the proposal active (snapshot first), mark corrections learned, start a targeted re-sort run (`scope: "revision"`) |
+| `reject-codebook-revision` / `undo-codebook-revision` | Decline a proposal, or restore the board exactly as before the last applied revision (user moves since are kept) |
 | `seed-demo-board` | Developer setup only (hidden from the agent): demo board from `BuilderIO/agent-native` |
 
 Sorting is agent work, not action work (framework rule: no model calls in actions). The main agent follows the shared skill `skills/feedback-synthesis/SKILL.md` and spawns `agents/theme-sorter.md` sub-agents; both ship from `server/agent-resources/` via `server/plugins/agent-resources.ts`. Quotes are stored only as spans into `noteText()` (title + blank line + body) after `findQuote()` confirms they are verbatim.

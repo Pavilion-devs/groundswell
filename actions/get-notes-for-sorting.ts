@@ -6,9 +6,9 @@ import { getDb, schema } from "../server/db/index.js";
 import { requireBoard } from "../server/lib/boards.js";
 import { getActiveCodebook } from "../server/lib/codebook.js";
 import { noteText } from "../server/lib/quotes.js";
-import { countPool, inSlice, scopeOf, sortPool } from "../server/lib/sorting.js";
+import { countPool, inSlice, poolOf, sortPool } from "../server/lib/sorting.js";
 
-const errors = defineActionErrors("no_codebook", "bad_slice", "run_not_found");
+const errors = defineActionErrors("no_codebook", "bad_slice", "run_not_found", "run_closed");
 
 export default defineAction({
   description:
@@ -43,9 +43,15 @@ export default defineAction({
   run: async ({ boardId, runId, slice, of, limit, maxChars, includeThemes }) => {
     if (slice >= of) return errors.noWrite(`slice must be below of (${of}).`, "bad_slice");
     await requireBoard(boardId, "viewer");
-    const [run] = await getDb().select({ boardId: schema.runs.boardId, meta: schema.runs.meta }).from(schema.runs).where(eq(schema.runs.id, runId)).limit(1);
+    const [run] = await getDb()
+      .select({ boardId: schema.runs.boardId, meta: schema.runs.meta, status: schema.runs.status })
+      .from(schema.runs)
+      .where(eq(schema.runs.id, runId))
+      .limit(1);
     if (!run || run.boardId !== boardId) return errors.noWrite(`Run ${runId} is not a sort run on this board.`, "run_not_found");
-    const pool = sortPool(boardId, scopeOf(run.meta), runId);
+    if (run.status !== "running") return errors.noWrite(`Run ${runId} is ${run.status}; stop sorting.`, "run_closed");
+    const spec = poolOf(run.meta);
+    const pool = sortPool(boardId, spec, runId);
     const active = await getActiveCodebook(boardId);
     if (!active) return errors.noWrite("This board has no active codebook.", "no_codebook");
 
@@ -56,7 +62,7 @@ export default defineAction({
       .where(and(pool, inSlice(slice, of)))
       .orderBy(schema.notes.id)
       .limit(limit);
-    const remaining = await countPool(boardId, scopeOf(run.meta), runId, { slice, of });
+    const remaining = await countPool(boardId, spec, runId, { slice, of });
 
     return {
       codebookVersion: active.codebook.version,

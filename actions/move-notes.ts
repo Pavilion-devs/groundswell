@@ -5,7 +5,9 @@ import { z } from "zod";
 import { getDb, schema } from "../server/db/index.js";
 import { requireBoard, tenantOf } from "../server/lib/boards.js";
 import { getActiveCodebook } from "../server/lib/codebook.js";
+import { countPendingCorrections } from "../server/lib/corrections.js";
 import { newId, nowIso } from "../server/lib/ids.js";
+import { REVISION_SUGGEST_AT } from "../server/lib/revisions.js";
 import { resolveThemeRef, themeErrors } from "../server/lib/themes.js";
 
 export default defineAction({
@@ -24,6 +26,8 @@ export default defineAction({
     corrections: z.number(),
     notFound: z.array(z.string()),
     to: z.object({ id: z.string(), name: z.string() }).nullable(),
+    pendingCorrections: z.number(),
+    revisionSuggested: z.boolean(),
     message: z.string(),
   }),
   errors: themeErrors,
@@ -119,13 +123,17 @@ export default defineAction({
     }
 
     const where = target ? `"${target.name}"` : "Unsorted";
+    const pendingCorrections = await countPendingCorrections(boardId);
+    const revisionSuggested = corrections.length > 0 && pendingCorrections >= REVISION_SUGGEST_AT;
     return {
       moved: placements.length,
       unchanged,
       corrections: corrections.length,
       notFound,
       to: target,
-      message: `Moved ${placements.length} note${placements.length === 1 ? "" : "s"} to ${where} and pinned ${placements.length === 1 ? "it" : "them"}.${corrections.length ? ` Recorded ${corrections.length} correction${corrections.length === 1 ? "" : "s"}.` : ""}${notFound.length ? ` ${notFound.length} ids were not on this board.` : ""}`,
+      pendingCorrections,
+      revisionSuggested,
+      message: `Moved ${placements.length} note${placements.length === 1 ? "" : "s"} to ${where} and pinned ${placements.length === 1 ? "it" : "them"}.${corrections.length ? ` Recorded ${corrections.length} correction${corrections.length === 1 ? "" : "s"}.` : ""}${notFound.length ? ` ${notFound.length} ids were not on this board.` : ""}${revisionSuggested ? ` ${pendingCorrections} corrections are pending: offer to propose a codebook revision so the agent learns from them.` : ""}`,
     };
   },
 });

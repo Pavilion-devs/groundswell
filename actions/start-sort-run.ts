@@ -4,7 +4,7 @@ import { z } from "zod";
 import { requireBoard } from "../server/lib/boards.js";
 import { getActiveCodebook } from "../server/lib/codebook.js";
 import { startRun } from "../server/lib/runs.js";
-import { countPool } from "../server/lib/sorting.js";
+import { countPool, sorterBrief as briefFor, sortNextStep, sortPlan } from "../server/lib/sorting.js";
 
 const errors = defineActionErrors("no_codebook", "nothing_to_sort");
 
@@ -43,20 +43,15 @@ export default defineAction({
       );
     }
 
-    // Small boards don't need many sorters: aim for at least ~40 notes each.
-    const of = Math.max(1, Math.min(slices, Math.ceil(total / 40)));
+    const { of, mode } = sortPlan(total, slices);
     const perSlice = await Promise.all(
       Array.from({ length: of }, async (_, slice) => ({ slice, of, notes: await countPool(boardId, scope, null, { slice, of }) })),
     );
     const runId = await startRun(board, "classify", { codebookId: active.codebook.id, version: active.codebook.version, slices: of, scope }, total);
-    const sorterBrief = `Sort board ${boardId}, run ${runId}, codebook v${active.codebook.version}${scope === "unsorted" ? " (re-sorting Unsorted after new themes were added)" : ""}. For your slice: loop get-notes-for-sorting(boardId, runId, slice, of) then place-notes(boardId, runId, placements) until remaining is 0. Every themed placement needs an exact quote; resend any note listed in quoteMisses.`;
+    const sorterBrief = briefFor(boardId, runId, active.codebook.version, scope);
     // The next step lives in the result, not only in the skill: models follow
     // the instruction in front of them at decision time far more reliably.
-    const mode: "solo" | "team" = of === 1 ? "solo" : "team";
-    const nextStep =
-      mode === "solo"
-        ? `Sort these ${total} notes yourself: loop get-notes-for-sorting(boardId, runId, slice 0, of 1) then place-notes until remaining is 0. Then call finish-sort-run(runId).`
-        : `Spawn exactly ${of} theme-sorter sub-agents now, in this turn: ${of} agent-teams calls with action "spawn" and agent "theme-sorter", one per slice (slice 0 to ${of - 1}, of ${of}), each given the sorterBrief plus its slice and of. Do not call get-notes-for-sorting or place-notes yourself in a team run. Then check agent-teams status until every sorter is completed or errored, and call finish-sort-run(runId).`;
+    const nextStep = sortNextStep(runId, total, of, mode);
     return {
       runId,
       codebookVersion: active.codebook.version,

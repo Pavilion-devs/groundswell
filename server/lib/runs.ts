@@ -66,3 +66,7 @@ export function succeedRun(runId: string, meta?: Record<string, unknown>): Promi
 export function failRun(runId: string, error: string): Promise<boolean> {
   return endRun(runId, "fail", { error: error.slice(0, 2000) });
 }
+
+export function cancelRun(runId: string, reason: string): Promise<boolean> {
+  return endRun(runId, "cancel", { error: reason.slice(0, 2000) });
+}

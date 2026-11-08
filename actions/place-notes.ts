@@ -9,7 +9,7 @@ import { nowIso } from "../server/lib/ids.js";
 import { findQuote, MAX_QUOTE_CHARS, noteText } from "../server/lib/quotes.js";
 import { CONFIDENCE_FLOOR, countNotYetSorted } from "../server/lib/sorting.js";
 
-const errors = defineActionErrors("no_codebook", "run_mismatch");
+const errors = defineActionErrors("no_codebook", "run_mismatch", "run_closed");
 
 const placementSchema = z.object({
   noteId: z.string().describe("Note id (note_...)"),
@@ -56,6 +56,8 @@ export default defineAction({
     if (runId) {
       const [run] = await db.select({ boardId: schema.runs.boardId, status: schema.runs.status }).from(schema.runs).where(eq(schema.runs.id, runId)).limit(1);
       if (!run || run.boardId !== boardId) return errors.noWrite(`Run ${runId} does not belong to this board.`, "run_mismatch");
+      // A closed run (finished, cancelled, or undone with its revision) takes no more writes.
+      if (run.status !== "running") return errors.noWrite(`Run ${runId} is ${run.status}; nothing was saved. Stop sorting.`, "run_closed");
     }
 
     const themeByKey = new Map(active.themes.map((t) => [t.key, t.id]));

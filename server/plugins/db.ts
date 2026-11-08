@@ -200,6 +200,16 @@ CREATE INDEX IF NOT EXISTS ${t}_owner_idx ON ${t} (owner_email);`,
         postgres: `ALTER TABLE placements ADD COLUMN IF NOT EXISTS suggested_theme_id TEXT;`,
       },
     },
+    {
+      // Phase 3: codebook revisions can be applied and undone.
+      version: 4,
+      name: "groundswell-codebook-revisions",
+      sql: {
+        postgres: `ALTER TABLE codebooks ADD COLUMN IF NOT EXISTS applied_at TEXT;
+ALTER TABLE codebooks ADD COLUMN IF NOT EXISTS restore_snapshot JSONB;
+CREATE INDEX IF NOT EXISTS corrections_board_pending_idx ON corrections (board_id) WHERE consumed_by_codebook_id IS NULL;`,
+      },
+    },
   ],
   { table: "groundswell_migrations" },
 );

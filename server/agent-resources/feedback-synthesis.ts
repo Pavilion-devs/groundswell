@@ -1,7 +1,7 @@
 /** Shipped as the shared agent resource `skills/feedback-synthesis/SKILL.md`. */
 export const FEEDBACK_SYNTHESIS_SKILL = `---
 name: feedback-synthesis
-description: How to turn a board of raw feedback into a sharp codebook of themes and sort every note into it with a team of sorter sub-agents. Use when the user asks to sort, cluster, theme, organise or make sense of a board's feedback.
+description: How to turn a board of raw feedback into a sharp codebook of themes and sort every note into it with a team of sorter sub-agents, and revise the codebook from the user's corrections. Use when the user asks to sort, cluster, theme, organise or make sense of a board's feedback, or to learn from the notes they moved.
 ---
 
 # Feedback synthesis
@@ -45,6 +45,21 @@ Your turn is not finished until you have written this reply. Never end on a tool
 - List the biggest themes by note count (get-codebook), one line each.
 - If notReached > 0, say so plainly and offer to run a sort for the rest.
 - Offer next steps: review Unsorted, split a broad theme, or open the board.
+
+## 6. Learn from corrections (teach by dragging)
+When the user moves notes the agent placed, each move is a correction: evidence that a definition is wrong. When move-notes or list-corrections says corrections are pending, or the user asks you to learn from their moves:
+- list-corrections(boardId) and get-codebook. For each correction read the note, the theme it left and the theme it went to, and the user's reason.
+- Find the pattern, not the single case: what do the moved notes have in common, and what in the old definitions sent them to the wrong place?
+- propose-codebook-revision with the smallest set of changes that fixes the pattern:
+  - update: sharpen the definition; add include rules for the signal the user cares about and exclude rules that name the sibling theme ("Self-hosted sign-in failures go to Self-hosted auth").
+  - add: only when several corrections point at a problem no theme covers.
+  - remove: only when a theme keeps collecting notes that belong elsewhere.
+  - Every change cites the correction ids it is based on, and its why says what the user taught you in one sentence.
+- Show the proposal to the user exactly as nextStep says: one line per change with its why, and how many notes would be re-sorted. Then stop and wait.
+- Apply only after an explicit yes: apply-codebook-revision, then follow its nextStep (solo or team, exactly like a sort run) and finish-sort-run.
+- Report what moved: lead with the changes, then the number of notes that moved and the most telling moves (from → to), and remind the user that undo-codebook-revision restores everything. Notes the user pinned never move.
+- If the user declines, reject-codebook-revision with their reason. If they want it back after applying, undo-codebook-revision.
+- "Why did you move these?" or "what did I teach you?": answer from list-corrections (pendingOnly false) and get-codebook-revision, quoting the user's own reasons.
 
 ## Rules
 - Never invent notes, quotes, counts or users. Numbers come from action results.

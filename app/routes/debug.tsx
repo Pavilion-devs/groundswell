@@ -4,7 +4,8 @@
  * product UI. The real interface is designed with the user in Phase 5 (see
  * plan.md) and replaces this page.
  */
-import { useActionQuery, writeClientAppState } from "@agent-native/core/client/hooks";
+import { sendToAgentChat } from "@agent-native/core/client/agent-chat";
+import { useActionMutation, useActionQuery, writeClientAppState } from "@agent-native/core/client/hooks";
 import { useSetPageTitle } from "@agent-native/toolkit/app-shell";
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router";
@@ -58,6 +59,18 @@ function BoardDebug({ boardId }: { boardId: string }) {
     offset,
   });
   const themeName = useMemo(() => new Map(codebook?.themes.map((t) => [t.id, t.name]) ?? []), [codebook]);
+  const [moveTo, setMoveTo] = useState<string>("");
+  const [moveReason, setMoveReason] = useState("");
+  const [moveResult, setMoveResult] = useState("");
+  // Stand-in for dragging: the same action the board UI will call on drop.
+  const move = useActionMutation("move-notes", {
+    onSuccess: (r) => {
+      setMoveResult(r.message);
+      setSelected(new Set());
+      setMoveReason("");
+    },
+    onError: (e) => setMoveResult(String((e as Error).message ?? e)),
+  });
 
   // Selection contract: the agent reads this through view-screen.
   useEffect(() => {
@@ -135,6 +148,8 @@ function BoardDebug({ boardId }: { boardId: string }) {
         </ul>
       </section>
 
+      <TeachPanel boardId={boardId} />
+
       <section>
         <input
           className="mb-2 w-80 border bg-background px-2 py-1"
@@ -157,6 +172,39 @@ function BoardDebug({ boardId }: { boardId: string }) {
           <button className="underline" disabled={offset + 50 >= (notes?.total ?? 0)} onClick={() => setOffset(offset + 50)}>
             next
           </button>
+        </p>
+        <p className="mb-2">
+          move selected to{" "}
+          <select className="border bg-background px-2 py-1" value={moveTo} onChange={(e) => setMoveTo(e.target.value)}>
+            <option value="">(pick a theme)</option>
+            <option value="__unsorted">Unsorted</option>
+            {codebook?.themes.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.name}
+              </option>
+            ))}
+          </select>{" "}
+          <input
+            className="w-64 border bg-background px-2 py-1"
+            placeholder="why (optional)"
+            value={moveReason}
+            onChange={(e) => setMoveReason(e.target.value)}
+          />{" "}
+          <button
+            className="underline disabled:opacity-40"
+            disabled={!moveTo || selected.size === 0 || move.isPending}
+            onClick={() =>
+              move.mutate({
+                boardId,
+                noteIds: [...selected],
+                to: moveTo === "__unsorted" ? null : moveTo,
+                ...(moveReason.trim() ? { reason: moveReason.trim() } : {}),
+              })
+            }
+          >
+            {move.isPending ? "moving…" : "move"}
+          </button>{" "}
+          <span className="text-xs text-muted-foreground">{moveResult}</span>
         </p>
         <table className="w-full border-collapse">
           <thead>
@@ -198,5 +246,123 @@ function BoardDebug({ boardId }: { boardId: string }) {
         </table>
       </section>
     </div>
+  );
+}
+
+/**
+ * Teach-by-dragging loop, plainly: pending corrections, the open proposal as a
+ * before/after diff, and apply / reject / undo. Approving applies the revision
+ * here (a deterministic write) and hands the re-sort to the agent, which runs
+ * the sorters; the agent never applies a revision on its own.
+ */
+function TeachPanel({ boardId }: { boardId: string }) {
+  const { data: corrections } = useActionQuery("list-corrections", { boardId, pendingOnly: true, limit: 20 });
+  const { data: revision } = useActionQuery("get-codebook-revision", { boardId });
+  const [status, setStatus] = useState("");
+  const apply = useActionMutation("apply-codebook-revision", {
+    onSuccess: (r) => {
+      setStatus(r.message);
+      if (r.runId) {
+        sendToAgentChat({
+          message: `I approved and applied codebook v${r.version}. Run the re-sort (run ${r.runId}) and tell me which notes moved.`,
+          context: JSON.stringify({ boardId, runId: r.runId, codebookId: r.codebookId }),
+          submit: true,
+          openSidebar: true,
+        });
+      }
+    },
+    onError: (e) => setStatus(String((e as Error).message ?? e)),
+  });
+  const reject = useActionMutation("reject-codebook-revision", {
+    onSuccess: (r) => setStatus(r.message),
+    onError: (e) => setStatus(String((e as Error).message ?? e)),
+  });
+  const undo = useActionMutation("undo-codebook-revision", {
+    onSuccess: (r) => setStatus(r.message),
+    onError: (e) => setStatus(String((e as Error).message ?? e)),
+  });
+  const proposal = revision?.proposal?.status === "proposed" ? revision.proposal : null;
+
+  return (
+    <section className="border-t pt-4">
+      <h3 className="font-bold">Teach by dragging</h3>
+      <p>
+        pending corrections {corrections?.pending ?? 0}
+        {corrections?.revisionSuggested ? " · enough to learn from " : " "}
+        <button
+          className="underline disabled:opacity-40"
+          disabled={!corrections?.pending}
+          onClick={() =>
+            sendToAgentChat({
+              message: "Learn from the notes I moved on this board and propose a codebook revision.",
+              context: JSON.stringify({ boardId }),
+              submit: true,
+              openSidebar: true,
+            })
+          }
+        >
+          ask the agent to learn
+        </button>
+        {revision?.undoable ? (
+          <>
+            {" "}
+            ·{" "}
+            <button className="underline" disabled={undo.isPending} onClick={() => undo.mutate({ boardId })}>
+              undo revision v{revision.undoable.version}
+            </button>
+          </>
+        ) : null}
+      </p>
+      <ul className="mt-1 list-disc pl-6 text-xs">
+        {corrections?.corrections.map((c) => (
+          <li key={c.id}>
+            [{c.id}] {c.noteTitle}: {c.from?.name ?? "Unsorted"} → {c.to?.name ?? "Unsorted"}
+            {c.reason ? ` · "${c.reason}"` : ""}
+          </li>
+        ))}
+      </ul>
+      {proposal && (
+        <div className="mt-3 border p-2">
+          <p className="font-bold">
+            Proposal v{proposal.version} (from v{proposal.basedOnVersion}) · re-sorts {proposal.impact?.notesToReSort ?? "?"} notes
+          </p>
+          {proposal.summary && <p className="text-xs">{proposal.summary}</p>}
+          <ul className="mt-2 space-y-2">
+            {proposal.entries.map((e) => (
+              <li key={`${e.op}-${e.key}`}>
+                <span className="font-bold">
+                  {e.op} {e.after?.name ?? e.before?.name}
+                </span>{" "}
+                <span className="text-xs text-muted-foreground">({e.basedOn.join(", ")})</span>
+                <div className="text-xs">why: {e.why}</div>
+                {e.before && <div className="pl-4 text-xs text-muted-foreground line-through">{e.before.definition}</div>}
+                {e.after && <div className="pl-4 text-xs">{e.after.definition}</div>}
+                {e.after && e.after.excludeRules.length > 0 && (
+                  <div className="pl-4 text-xs">exclude: {e.after.excludeRules.join(" · ")}</div>
+                )}
+              </li>
+            ))}
+          </ul>
+          <p className="mt-2">
+            <button
+              className="underline"
+              disabled={apply.isPending}
+              onClick={() => apply.mutate({ boardId, codebookId: proposal.codebookId })}
+            >
+              approve and apply
+            </button>{" "}
+            ·{" "}
+            <button
+              className="underline"
+              disabled={reject.isPending}
+              onClick={() => reject.mutate({ boardId, codebookId: proposal.codebookId })}
+            >
+              reject
+            </button>
+          </p>
+        </div>
+      )}
+      {status && <p className="mt-2 text-xs">{status}</p>}
+    </section>
   );
 }

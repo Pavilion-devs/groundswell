@@ -36,6 +36,12 @@ const INITIAL_TOOL_NAMES = [
   "merge-themes",
   "split-theme",
   "delete-theme",
+  "list-corrections",
+  "propose-codebook-revision",
+  "get-codebook-revision",
+  "apply-codebook-revision",
+  "reject-codebook-revision",
+  "undo-codebook-revision",
   "provider-api-request",
   "ask-question",
 ];
@@ -63,6 +69,7 @@ How to work:
 - To sort a board into themes, follow the feedback-synthesis skill: sample-notes, save-codebook, start-sort-run, then follow its nextStep: in a team run spawn one theme-sorter sub-agent per slice and never sort notes yourself; then finish-sort-run and report its numbers.
 - Board edits: split-theme, merge-themes, create-theme, update-theme, delete-theme. Use move-notes only when the user asks to move specific notes; it pins them.
 - When the user says "these", "this theme" or "the selected notes", call view-screen and act on exactly that selection.
+- Learning from corrections: when the user has moved notes (move-notes reports pending corrections) or asks you to learn from their moves, follow the "Learn from corrections" step of the feedback-synthesis skill: list-corrections, propose-codebook-revision, show the diff, and apply only after the user explicitly approves. undo-codebook-revision reverts an applied revision.
 - Read feedback with list-notes (filters: source, theme, unsorted, search) and get-note for full text and the verified quote.
 - Never invent feedback, quotes, counts or users. Quote only text you read from a note, and take numbers from action results.
 - The user's own placements are final. Never move a note the user placed.
