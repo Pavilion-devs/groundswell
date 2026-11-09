@@ -3,8 +3,9 @@
 // Viewport 1440x810 at device scale 4/3, so the UI reads larger and the output is 1920x1080.
 const puppeteer = require("puppeteer-core");
 const fs = require("fs"), path = require("path"), { execFileSync } = require("child_process");
-const BASE = process.env.URL || "http://localhost:8080";
-const BOARD = process.env.BOARD || "brd_d2582de27a0f4fd083da";
+const arg = (name, dflt) => { const a = process.argv.find(x => x.startsWith(`--${name}=`)); return a ? a.slice(name.length + 3) : dflt; };
+const BASE = arg("url", "http://localhost:8080");
+const BOARD = arg("board", "brd_d2582de27a0f4fd083da");
 const scene = process.argv[2];
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const log = (...a) => console.log(`[${scene} ${new Date().toISOString().slice(11, 19)}]`, ...a);
@@ -194,7 +195,7 @@ const log = (...a) => console.log(`[${scene} ${new Date().toISOString().slice(11
 
     // Continue recording a sort already running on BOARD2 (the agent keeps working server-side).
     async sort2() {
-      const id = process.env.BOARD2;
+      const id = arg("board2", "");
       await go(`/boards/${id}`); await openAgent(); await sleep(800);
       await start(); await sleep(1000); mark("resume");
       const t = Date.now();

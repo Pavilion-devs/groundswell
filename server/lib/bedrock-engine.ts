@@ -1,6 +1,8 @@
 import { AnthropicBedrock } from "@anthropic-ai/bedrock-sdk";
 import { createAISDKEngine, registerAgentEngine } from "@agent-native/core/agent/engine";
 import { defineAppConfig } from "@agent-native/core/app-config";
+import { registerRequiredSecret } from "@agent-native/core/secrets";
+import { resolveSecretDetailed } from "@agent-native/core/server";
 
 import { BEDROCK_MODELS, BEDROCK_REGION } from "./models.js";
 
@@ -13,9 +15,10 @@ import { BEDROCK_MODELS, BEDROCK_REGION } from "./models.js";
  * streams Bedrock's response back as the Anthropic event stream the engine
  * expects. Nothing else is reachable through this fetch.
  *
- * Credentials come from the AWS SDK's default chain: locally the AWS CLI login
- * session (`aws login`), in production the deployment's AWS role or keys. No
- * key is stored by the app. Region: BEDROCK_REGION in models.ts.
+ * Credentials: a Bedrock API key (AMAZON_BEDROCK_API_KEY, from the app's secret
+ * store or the deployment env, looked up per request) when one is set; otherwise
+ * the AWS SDK's default chain (locally the `aws login` CLI session, on a host its
+ * AWS role or keys). Region: BEDROCK_REGION in models.ts.
  */
 export const BEDROCK_ENGINE_NAME = "bedrock";
 /** Placeholder origin the engine "calls"; requests never leave for it. */
@@ -23,10 +26,30 @@ const BEDROCK_BASE_URL = "https://bedrock.groundswell.invalid/v1";
 const NO_API_KEY = "aws-credentials";
 const MAX_OUTPUT_TOKENS = 8192;
 
-let client: AnthropicBedrock | null = null;
-function bedrock(): AnthropicBedrock {
-  client ??= new AnthropicBedrock({ awsRegion: BEDROCK_REGION });
-  return client;
+export const BEDROCK_API_KEY = "AMAZON_BEDROCK_API_KEY";
+
+registerRequiredSecret({
+  key: BEDROCK_API_KEY,
+  label: "Amazon Bedrock API key",
+  description: "Runs Groundswell's agent on Claude through Amazon Bedrock. Without it the server's AWS credentials are used.",
+  docsUrl: "https://docs.aws.amazon.com/bedrock/latest/userguide/api-keys.html",
+  scope: "user",
+  kind: "api-key",
+  required: false,
+  usedFor: [{ appId: "groundswell", feature: "Agent chat and sorting", effectWhenRemoved: "The agent falls back to the server's AWS credentials." }],
+});
+
+// One client per credential: the API key when set (bearer auth), else the AWS default chain (SigV4).
+const clients = new Map<string, AnthropicBedrock>();
+async function bedrock(): Promise<AnthropicBedrock> {
+  const detail = await resolveSecretDetailed(BEDROCK_API_KEY);
+  const key = detail.value || "";
+  let c = clients.get(key);
+  if (!c) {
+    c = key ? new AnthropicBedrock({ awsRegion: BEDROCK_REGION, apiKey: key }) : new AnthropicBedrock({ awsRegion: BEDROCK_REGION, apiKey: null });
+    clients.set(key, c);
+  }
+  return c;
 }
 
 function jsonResponse(body: unknown, status = 200): Response {
@@ -57,10 +80,10 @@ async function bedrockFetch(input: Parameters<typeof fetch>[0], init?: Parameter
   const options = { ...(init?.signal ? { signal: init.signal } : {}), ...(beta ? { headers: { "anthropic-beta": beta } } : {}) };
   try {
     if (!body.stream) {
-      const message = await bedrock().messages.create({ ...body, stream: false }, options);
+      const message = await (await bedrock()).messages.create({ ...body, stream: false }, options);
       return jsonResponse(message);
     }
-    const stream = (await bedrock().messages.create({ ...body, stream: true }, options)) as unknown as AsyncIterable<{ type: string }> & {
+    const stream = (await (await bedrock()).messages.create({ ...body, stream: true }, options)) as unknown as AsyncIterable<{ type: string }> & {
       controller: AbortController;
     };
     const encoder = new TextEncoder();
