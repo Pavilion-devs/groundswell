@@ -32,6 +32,11 @@ interface ReportCardProps {
   onDragEnd: () => void;
 }
 
+/** Previews show plain text: drop Markdown markers from GitHub issue bodies. */
+export function plainPreview(text: string): string {
+  return text.replace(/[#*`>_~]+/g, "").replace(/\s+/g, " ").trim();
+}
+
 function timeAgo(iso: string | null): string {
   if (!iso) return "";
   const days = Math.floor((Date.now() - Date.parse(iso)) / 86_400_000);
@@ -65,7 +70,7 @@ export function ReportCard({ report, selected, onSelect, onDragStart, onDragEnd 
   };
 
   const tag = report.pinned ? "Placed by you" : (report.labels[0] ?? "GitHub");
-  const body = report.quote ? `“${report.quote}”` : report.excerpt;
+  const body = report.quote ? `“${report.quote}”` : plainPreview(report.excerpt);
 
   return (
     <div

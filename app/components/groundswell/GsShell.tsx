@@ -3,7 +3,7 @@
  * (components/layout/sidebar.tsx, topbar.tsx, dashboard-shell.tsx). Markup and
  * classes are Twisky's; navigation, data and the agent toggle are ours.
  */
-import { useSession } from "@agent-native/core/client/hooks";
+import { useActionQuery, useSession } from "@agent-native/core/client/hooks";
 import { AgentToggleButton } from "@agent-native/toolkit/app/chat";
 import { Bell, Columns3, FileText, Home, Inbox, Menu, Plug, Search, Zap } from "lucide-react";
 import React from "react";
@@ -22,6 +22,8 @@ interface NavItem {
   icon: React.ComponentType<{ className?: string }>;
   href: string | null;
   count?: number;
+  /** Active only on this exact path (the board route is a prefix of the others). */
+  exact?: boolean;
 }
 
 function getInitials(fullName?: string, email?: string): string {
@@ -87,7 +89,7 @@ function Sidebar({ items }: { items: NavItem[] }) {
         </div>
         <div className="space-y-1">
           {items.map((item) => {
-            const active = item.href !== null && (pathname === item.href || pathname.startsWith(item.href + "/"));
+            const active = item.href !== null && (pathname === item.href || (!item.exact && pathname.startsWith(item.href + "/")));
             const Icon = item.icon;
             const row = (
               <div
@@ -185,20 +187,23 @@ function Topbar({
 
 export interface GsShellProps {
   boardId: string;
-  noteCount?: number;
-  problemCount?: number;
-  reviewCount?: number;
   search: string;
   onSearch: (value: string) => void;
   children: React.ReactNode;
 }
 
-export function GsShell({ boardId, noteCount, problemCount, reviewCount = 0, search, onSearch, children }: GsShellProps) {
+export function GsShell({ boardId, search, onSearch, children }: GsShellProps) {
   const base = `/boards/${boardId}`;
+  // Same queries as the pages use, so the counts are shared and live.
+  const board = useActionQuery("get-board", { id: boardId });
+  const priorities = useActionQuery("get-priorities", { boardId });
+  const noteCount = board.data?.counts.notes;
+  const reviewCount = board.data?.counts.unsorted ?? 0;
+  const problemCount = priorities.data ? priorities.data.themes.filter((t) => !t.internal).length : undefined;
   const items: NavItem[] = [
-    { label: "Dashboard", icon: Home, href: null },
-    { label: "Board", icon: Columns3, href: base, ...(problemCount !== undefined ? { count: problemCount } : {}) },
-    { label: "Review", icon: Inbox, href: null, count: reviewCount },
+    { label: "Dashboard", icon: Home, href: `${base}/dashboard` },
+    { label: "Board", icon: Columns3, href: base, exact: true, ...(problemCount !== undefined ? { count: problemCount } : {}) },
+    { label: "Review", icon: Inbox, href: `${base}/review`, count: reviewCount },
     { label: "Briefs", icon: FileText, href: null },
     { label: "Sources", icon: Plug, href: null, ...(noteCount !== undefined ? { count: noteCount } : {}) },
     { label: "Automations", icon: Zap, href: null },
@@ -207,7 +212,7 @@ export function GsShell({ boardId, noteCount, problemCount, reviewCount = 0, sea
     <div className="gs-app font-inter flex h-full min-h-0">
       <Sidebar items={items} />
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <Topbar search={search} onSearch={onSearch} reviewCount={reviewCount} reviewHref={base} />
+        <Topbar search={search} onSearch={onSearch} reviewCount={reviewCount} reviewHref={`${base}/review`} />
         <main className="flex-1 min-h-0 overflow-auto">{children}</main>
       </div>
     </div>

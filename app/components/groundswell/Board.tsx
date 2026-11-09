@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { TAB_ID } from "@/lib/tab-id";
 
 import { BoardColumn, type Column } from "./BoardColumn";
+import { ReportDrawer } from "./ReportDrawer";
 import type { Report } from "./ReportCard";
 
 const UNSORTED = "unsorted";
@@ -32,6 +33,7 @@ export function Board({ boardId, search, onCounts }: BoardProps) {
   const [overrides, setOverrides] = useState<Map<string, string | null>>(new Map());
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [dragged, setDragged] = useState<Report | null>(null);
+  const [openNote, setOpenNote] = useState<string | null>(null);
 
   const move = useActionMutation("move-notes", {
     onError: (error, input) => {
@@ -114,13 +116,20 @@ export function Board({ boardId, search, onCounts }: BoardProps) {
     void writeClientAppState(`selection:${TAB_ID}`, { boardId, noteIds: [...selected], themeIds: [] }, { requestSource: TAB_ID });
   }, [boardId, selected]);
 
-  const onSelect = (id: string, additive: boolean) =>
+  // A plain click opens the report (and selects just it); cmd/shift-click builds a selection.
+  const onSelect = (id: string, additive: boolean) => {
+    if (!additive) {
+      setSelected(new Set([id]));
+      setOpenNote(id);
+      return;
+    }
     setSelected((prev) => {
       const next = new Set(additive ? prev : []);
       if (prev.has(id) && (additive || prev.size === 1)) next.delete(id);
       else next.add(id);
       return next;
     });
+  };
 
   const handleDrop = (e: React.DragEvent, targetColumnId: string) => {
     e.preventDefault();
@@ -250,6 +259,12 @@ export function Board({ boardId, search, onCounts }: BoardProps) {
         ))}
       </div>
       {dragged && <span className="sr-only" aria-live="polite">Moving {dragged.title}</span>}
+      <ReportDrawer
+        boardId={boardId}
+        noteId={openNote}
+        problems={themes.map((t) => ({ id: t.themeId, name: t.name }))}
+        onOpenChange={(o) => !o && setOpenNote(null)}
+      />
     </div>
   );
 }

@@ -295,19 +295,23 @@ Each phase ends with a working, demoable app.
 - **Open:** the Meta API key in `.env` started returning 401 `invalid_api_key` on 2026-11-09; the agent cannot run until the user adds a fresh key (restart the server after). The "Bugs in Plan…" theme is a candidate for a split by app.
 
 ### Phase 5 — UI vision review (with the user, before building UI)
-- [ ] Study references together: Builder's own Agent-Native apps (Design, Plan, Slides at agent-native.com/apps) for framework-native patterns, plus canvas/insight tools (FigJam, Miro, tldraw, Dovetail, Linear) for interaction ideas
-- [ ] Produce **3 distinct UI directions** as clickable mockups populated with the real themes from Phase 2–4 (e.g. *Editorial Canvas*, *Dense Workbench*, *Living Map*), each showing the board, semantic zoom, the theme drawer and the codebook diff
-- [ ] User picks, mixes and refines; iterate until approved
-- [ ] Lock the result in `DESIGN.md` (type, color tokens, spacing, motion, components, key screens)
-- **Done when:** the user signs off on `DESIGN.md`. No production UI is built before this.
+- [x] Studied references on Dribbble together (canvas, map, dashboard, AI-panel shots)
+- [x] Mocked up two directions on real data (priority bubble map into canvas; light Enrolliq-style dashboard); the user rejected both
+- [x] **Decision (2026-11-09): reuse the UI of the user's earlier project Twisky** (`Pavilion-devs/twiskylandingpage`): its landing page, dashboard shell and kanban board, copied with only copy and data changed
+- [x] Locked in `DESIGN.md` (tokens, classes, screen-to-source map, interaction rules)
+- **Done when:** the user signs off on `DESIGN.md`. ✅ (direction chosen by the user)
 
-### Phase 6 — Build the UI
-- [ ] Board: canvas pan/zoom, theme islands, cards, Unsorted tray, semantic zoom, 1,000+ notes fast
-- [ ] Drag-and-drop and lasso wired to the existing actions; selection written to app state
-- [ ] Live sync, "the swell", ripple re-sort animation, agent presence
-- [ ] Sources, theme drawer + Insight Brief, codebook diff review, priorities panel
-- [ ] Public share link; MCP server + MCP App card for board/theme
-- [ ] Stretch: Slack digest, generative-UI trend chart, A2A to Slides
+### Phase 6 — Build the UI (Twisky port)
+- [x] Shell: Twisky sidebar + top bar (search filters the board, review bell, theme switch, agent toggle), `/boards/:id` owns its chrome, agent panel kept
+- [x] Board: problems ranked by SQL as columns, then Unsorted, then internal groups; cards are reports with verified quotes; native drag and drop calls `move-notes` (pin + correction + "Teach the agent"); click/cmd-click selection written to app state; optimistic moves with live sync (verified: a drag recorded a real correction)
+- [x] Dashboard home (Twisky stat cards: reports, problems, need review, rising; ranked problems from SQL; recent agent runs)
+- [x] Report drawer (Twisky ConversationDrawer: full report with the verified quote highlighted, agent's placement + confidence + rationale, change problem, open on GitHub, ask the agent)
+- [ ] Problem drawer: brief, evidence quotes, file issue (dry run first)
+- [x] Review: Unsorted reports with the agent's guess; Accept or choose a problem (pinned, recorded as a correction)
+- [ ] Briefs, Sources, Automations pages
+- [ ] Ripple animation for notes the agent moved after a revision; codebook diff review in the UI
+- [ ] Landing page from Twisky's marketing components
+- [ ] Public share link; MCP App card (stretch)
 - **Done when:** every engine action is reachable from the UI and the demo script runs end to end.
 
 ### Phase 7 — Polish, deploy, submit
