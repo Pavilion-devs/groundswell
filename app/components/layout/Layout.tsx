@@ -75,6 +75,10 @@ function EndVoiceChatOutsideChat() {
 }
 
 export function Layout({ children }: LayoutProps) {
+  // The landing page (Twisky's marketing page) is a plain scrolling page: no
+  // app sidebar, header or agent panel.
+  const { pathname } = useLocation();
+  if (pathname === "/" || pathname === HOME_PATH) return <>{children}</>;
   return (
     <RealtimeVoiceModeProvider browserTabId={TAB_ID}>
       <EndVoiceChatOutsideChat />

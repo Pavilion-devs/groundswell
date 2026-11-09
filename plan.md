@@ -310,7 +310,7 @@ Each phase ends with a working, demoable app.
 - [x] Review: Unsorted reports with the agent's guess; Accept or choose a problem (pinned, recorded as a correction)
 - [ ] Briefs, Sources, Automations pages
 - [ ] Ripple animation for notes the agent moved after a revision; codebook diff review in the UI
-- [ ] Landing page from Twisky's marketing components
+- [x] Landing page from Twisky's marketing components (`/` and `/home`, public, one CTA to the dashboard, hero board is a dated snapshot of the real board; `rootAuth: false` so `/` is no longer the sign-in page)
 - [ ] Public share link; MCP App card (stretch)
 - **Done when:** every engine action is reachable from the UI and the demo script runs end to end.
 

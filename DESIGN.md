@@ -37,7 +37,7 @@ Classes ported as-is: `dashboard-header`, `dashboard-sidebar`, `dashboard-stat-c
 | **Dashboard**: stat cards + ranked problems + recent agent activity | `dashboard/DashboardMainContent.tsx` | `/boards/:id/dashboard` |
 | **Report drawer**: full report, verified quote, theme, brief, file issue | `conversations/ConversationDrawer.tsx` | drawer over board |
 | **Review**: Unsorted reports with the agent's guess | board column + cards | `/boards/:id/review` |
-| Landing page | `marketing/*` | `/` (later) |
+| **Landing page**: header (Features / Board pills, theme switch), hero with typed headline and one CTA, a draggable snapshot of the real board, six features, closing CTA, footer. One call to action only ("Open the dashboard" → `/boards` → latest board's dashboard); no sign-in or sign-up buttons. Public: calls no actions; the board comes from `components/landing/snapshot.ts` (real data, dated) | `marketing/Header`, `HeroSection`, `Features`, `CallToAction`, `Footer`, `Logo` | `/` and `/home` (the framework moves signed-in visitors from `/` to `/home` before React loads) |
 
 ## Interaction rules
 

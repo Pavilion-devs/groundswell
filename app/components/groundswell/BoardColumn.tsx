@@ -15,6 +15,8 @@ export interface Column {
   rank: number | null;
   score: number | null;
   reports: Report[];
+  /** Reports in the problem when only some are shown (the landing snapshot). */
+  total?: number;
 }
 
 interface BoardColumnProps {
@@ -32,7 +34,7 @@ export function BoardColumn({ column, selected, onSelect, onDrop, onTaskDragStar
 
   return (
     <section
-      aria-label={`${column.title}, ${column.reports.length} reports`}
+      aria-label={`${column.title}, ${column.total ?? column.reports.length} reports`}
       className={cn(
         "flex flex-col w-72 min-w-72 rounded-lg border border-border backdrop-blur-sm transition-all duration-300 min-h-0",
         isOver ? "column-highlight border-muted/50" : "bg-card/50",
@@ -54,7 +56,7 @@ export function BoardColumn({ column, selected, onSelect, onDrop, onTaskDragStar
           <h4 className="font-medium text-sm text-foreground truncate" title={column.title}>
             {column.title}
           </h4>
-          <span className="text-xs bg-muted/50 px-2 py-0.5 rounded-full text-muted-foreground flex-shrink-0">{column.reports.length}</span>
+          <span className="text-xs bg-muted/50 px-2 py-0.5 rounded-full text-muted-foreground flex-shrink-0">{column.total ?? column.reports.length}</span>
         </div>
         <span className="text-[11px] text-muted-foreground whitespace-nowrap">{meta}</span>
       </div>
