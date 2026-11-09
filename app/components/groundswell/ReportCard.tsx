@@ -27,6 +27,8 @@ export interface Report {
 interface ReportCardProps {
   report: Report;
   selected: boolean;
+  /** The agent just moved this card after a revision: flash it. */
+  rippled?: boolean;
   onSelect: (id: string, additive: boolean) => void;
   onDragStart: (e: React.DragEvent, report: Report) => void;
   onDragEnd: () => void;
@@ -48,7 +50,7 @@ function timeAgo(iso: string | null): string {
   return months < 12 ? `${months} mo ago` : `${Math.floor(months / 12)} yr ago`;
 }
 
-export function ReportCard({ report, selected, onSelect, onDragStart, onDragEnd }: ReportCardProps) {
+export function ReportCard({ report, selected, rippled = false, onSelect, onDragStart, onDragEnd }: ReportCardProps) {
   const [isDragging, setIsDragging] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
@@ -75,6 +77,7 @@ export function ReportCard({ report, selected, onSelect, onDragStart, onDragEnd 
   return (
     <div
       ref={cardRef}
+      data-note-id={report.id}
       draggable
       role="button"
       tabIndex={0}
@@ -96,6 +99,7 @@ export function ReportCard({ report, selected, onSelect, onDragStart, onDragEnd 
         "task-card p-4 bg-card rounded-md border border-border shadow-sm hover:shadow-md transition-all duration-200 h-48 flex flex-col cursor-grab active:cursor-grabbing outline-none focus-visible:ring-2 focus-visible:ring-ring",
         isDragging && "dragging",
         selected && "ring-2 ring-primary",
+        rippled && "rippled",
       )}
     >
       <div className="flex justify-between items-start mb-3 flex-shrink-0 gap-2">

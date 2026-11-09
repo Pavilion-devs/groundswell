@@ -5,7 +5,10 @@
  */
 import { useActionQuery } from "@agent-native/core/client/hooks";
 import { CheckCircle2, Inbox, Layers, MessageSquare, TrendingUp } from "lucide-react";
+import { useState } from "react";
 import { Link } from "react-router";
+
+import { ProblemDrawer } from "./ProblemDrawer";
 
 const RUN_LABEL: Record<string, string> = {
   import: "Imported feedback",
@@ -28,6 +31,7 @@ function when(iso: string): string {
 export function Dashboard({ boardId, search }: { boardId: string; search: string }) {
   const board = useActionQuery("get-board", { id: boardId });
   const priorities = useActionQuery("get-priorities", { boardId });
+  const [openProblem, setOpenProblem] = useState<string | null>(null);
 
   if (board.isLoading || priorities.isLoading) {
     return <div className="p-6 text-sm text-muted-foreground">Loading dashboard...</div>;
@@ -84,7 +88,12 @@ export function Dashboard({ boardId, search }: { boardId: string; search: string
             <h3 className="text-sm font-semibold dashboard-title">Top problems</h3>
             <div className="space-y-3">
               {top.map((t) => (
-                <Link key={t.themeId} to={base} className="flex items-center gap-4 p-4 dashboard-stat-card rounded-lg">
+                <button
+                  type="button"
+                  key={t.themeId}
+                  onClick={() => setOpenProblem(t.themeId)}
+                  className="w-full text-left flex items-center gap-4 p-4 dashboard-stat-card rounded-lg hover:opacity-90"
+                >
                   <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center text-xs font-semibold text-muted-foreground flex-shrink-0">
                     #{t.rank}
                   </div>
@@ -99,7 +108,7 @@ export function Dashboard({ boardId, search }: { boardId: string; search: string
                     <p className="text-sm font-semibold dashboard-title">{t.score}</p>
                     <p className="text-xs dashboard-inactive">score</p>
                   </div>
-                </Link>
+                </button>
               ))}
             </div>
           </section>
@@ -136,6 +145,7 @@ export function Dashboard({ boardId, search }: { boardId: string; search: string
           </section>
         </div>
       </div>
+      <ProblemDrawer boardId={boardId} themeId={openProblem} onOpenChange={(o) => !o && setOpenProblem(null)} />
     </div>
   );
 }

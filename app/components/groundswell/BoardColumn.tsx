@@ -22,13 +22,16 @@ export interface Column {
 interface BoardColumnProps {
   column: Column;
   selected: ReadonlySet<string>;
+  rippled?: ReadonlySet<string>;
   onSelect: (id: string, additive: boolean) => void;
+  /** Open the problem drawer from the column title. */
+  onOpenProblem?: (columnId: string) => void;
   onDrop: (e: React.DragEvent, columnId: string) => void;
   onTaskDragStart: (e: React.DragEvent, report: Report) => void;
   onTaskDragEnd: () => void;
 }
 
-export function BoardColumn({ column, selected, onSelect, onDrop, onTaskDragStart, onTaskDragEnd }: BoardColumnProps) {
+export function BoardColumn({ column, selected, rippled, onSelect, onOpenProblem, onDrop, onTaskDragStart, onTaskDragEnd }: BoardColumnProps) {
   const [isOver, setIsOver] = useState(false);
   const meta = column.kind === "problem" ? `#${column.rank} · ${column.score}` : column.kind === "unsorted" ? "Needs review" : "Not feedback";
 
@@ -53,9 +56,20 @@ export function BoardColumn({ column, selected, onSelect, onDrop, onTaskDragStar
       <div className="p-3 border-b border-border flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 min-w-0">
           <span className={cn("h-3 w-3 rounded-full flex-shrink-0", column.kind === "unsorted" ? "bg-muted-foreground/60" : "bg-muted")} />
-          <h4 className="font-medium text-sm text-foreground truncate" title={column.title}>
-            {column.title}
-          </h4>
+          {onOpenProblem && column.kind !== "unsorted" ? (
+            <button
+              type="button"
+              onClick={() => onOpenProblem(column.id)}
+              className="font-medium text-sm text-foreground truncate text-left hover:underline underline-offset-2"
+              title={`${column.title}: open brief and evidence`}
+            >
+              {column.title}
+            </button>
+          ) : (
+            <h4 className="font-medium text-sm text-foreground truncate" title={column.title}>
+              {column.title}
+            </h4>
+          )}
           <span className="text-xs bg-muted/50 px-2 py-0.5 rounded-full text-muted-foreground flex-shrink-0">{column.total ?? column.reports.length}</span>
         </div>
         <span className="text-[11px] text-muted-foreground whitespace-nowrap">{meta}</span>
@@ -67,6 +81,7 @@ export function BoardColumn({ column, selected, onSelect, onDrop, onTaskDragStar
             key={report.id}
             report={report}
             selected={selected.has(report.id)}
+            rippled={rippled?.has(report.id) ?? false}
             onSelect={onSelect}
             onDragStart={onTaskDragStart}
             onDragEnd={onTaskDragEnd}

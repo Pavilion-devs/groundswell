@@ -14,6 +14,8 @@ const runShape = z.object({
   error: z.string().nullable(),
   createdAt: z.string(),
   finishedAt: z.string().nullable(),
+  /** Re-sort runs: the notes the agent moved (the board ripples them). */
+  movedNoteIds: z.array(z.string()).nullable(),
 });
 
 export default defineAction({
@@ -68,6 +70,7 @@ export default defineAction({
           error: schema.runs.error,
           createdAt: schema.runs.createdAt,
           finishedAt: schema.runs.finishedAt,
+          meta: schema.runs.meta,
         })
         .from(schema.runs)
         .where(eq(schema.runs.boardId, id))
@@ -83,7 +86,11 @@ export default defineAction({
       visibility: board.visibility,
       counts: { notes, sorted, unsorted: notes - sorted, sources: sources.length },
       sources: sources.map((s) => ({ ...s, stats: (s.stats as Record<string, unknown> | null) ?? null })),
-      recentRuns,
+      recentRuns: recentRuns.map(({ meta, ...run }) => {
+        const moved = (meta as { summary?: { movedNoteIds?: unknown }; movedNoteIds?: unknown } | null) ?? null;
+        const ids = moved?.movedNoteIds ?? moved?.summary?.movedNoteIds;
+        return { ...run, movedNoteIds: Array.isArray(ids) ? ids.filter((x): x is string => typeof x === "string") : null };
+      }),
     };
   },
 });

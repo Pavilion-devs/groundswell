@@ -204,9 +204,9 @@ export function GsShell({ boardId, search, onSearch, children }: GsShellProps) {
     { label: "Dashboard", icon: Home, href: `${base}/dashboard` },
     { label: "Board", icon: Columns3, href: base, exact: true, ...(problemCount !== undefined ? { count: problemCount } : {}) },
     { label: "Review", icon: Inbox, href: `${base}/review`, count: reviewCount },
-    { label: "Briefs", icon: FileText, href: null },
-    { label: "Sources", icon: Plug, href: null, ...(noteCount !== undefined ? { count: noteCount } : {}) },
-    { label: "Automations", icon: Zap, href: null },
+    { label: "Briefs", icon: FileText, href: `${base}/briefs` },
+    { label: "Sources", icon: Plug, href: `${base}/sources`, ...(noteCount !== undefined ? { count: noteCount } : {}) },
+    { label: "Automations", icon: Zap, href: `${base}/automations` },
   ];
   return (
     <div className="gs-app font-inter flex h-full min-h-0">

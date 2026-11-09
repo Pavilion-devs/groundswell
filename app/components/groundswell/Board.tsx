@@ -7,14 +7,16 @@
  */
 import { sendToAgentChat } from "@agent-native/core/client/agent-chat";
 import { useActionMutation, useActionQuery, writeClientAppState } from "@agent-native/core/client/hooks";
-import { Plus, Sparkles } from "lucide-react";
+import { Loader2, Plus, Sparkles, Undo2 } from "lucide-react";
 import React, { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { TAB_ID } from "@/lib/tab-id";
 
 import { BoardColumn, type Column } from "./BoardColumn";
+import { ProblemDrawer } from "./ProblemDrawer";
 import { ReportDrawer } from "./ReportDrawer";
+import { RevisionSheet } from "./RevisionSheet";
 import type { Report } from "./ReportCard";
 
 const UNSORTED = "unsorted";
@@ -29,11 +31,50 @@ export function Board({ boardId, search, onCounts }: BoardProps) {
   const priorities = useActionQuery("get-priorities", { boardId });
   const notes = useActionQuery("list-notes", { boardId, limit: 1000 });
   const corrections = useActionQuery("list-corrections", { boardId, limit: 1 });
+  const revision = useActionQuery("get-codebook-revision", { boardId });
+  const board = useActionQuery("get-board", { id: boardId });
   // Moves show at once; the server's answer replaces them when it arrives.
   const [overrides, setOverrides] = useState<Map<string, string | null>>(new Map());
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [dragged, setDragged] = useState<Report | null>(null);
   const [openNote, setOpenNote] = useState<string | null>(null);
+  const [openProblem, setOpenProblem] = useState<string | null>(null);
+  const [teachOpen, setTeachOpen] = useState(false);
+  const [rippled, setRippled] = useState<Set<string>>(new Set());
+
+  const undo = useActionMutation("undo-codebook-revision", {
+    onSuccess: (r) => toast(`Back to v${r.restoredVersion}`, { description: r.message }),
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Could not undo the revision."),
+  });
+
+  // Ripple: when a re-sort after a revision finishes, flash the cards the
+  // agent moved on its own, once per run.
+  const resort = board.data?.recentRuns.find((r) => r.kind === "resort") ?? null;
+  const movedCount = resort?.movedNoteIds?.length ?? 0;
+  const cardsReady = !!notes.data && !!priorities.data;
+  useEffect(() => {
+    if (!cardsReady || !resort || resort.status !== "succeeded" || !resort.movedNoteIds?.length || !resort.finishedAt) return;
+    if (Date.now() - Date.parse(resort.finishedAt) > 15 * 60_000) return;
+    const key = `gs.rippled.${resort.id}`;
+    try {
+      if (sessionStorage.getItem(key)) return;
+      sessionStorage.setItem(key, "1");
+    } catch {
+      // Storage blocked: ripple anyway.
+    }
+    setRippled(new Set(resort.movedNoteIds));
+    const first = resort.movedNoteIds[0];
+    requestAnimationFrame(() =>
+      document.querySelector(`[data-note-id="${CSS.escape(first ?? "")}"]`)?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" }),
+    );
+    toast(`The agent moved ${movedCount} report${movedCount === 1 ? "" : "s"}`, { description: "They are flashing on the board. Undo puts every card back exactly." });
+  }, [cardsReady, resort?.id, resort?.status, movedCount]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Clear the flash after it has played (separate so a re-run cannot leave it on).
+  useEffect(() => {
+    if (!rippled.size) return;
+    const t = setTimeout(() => setRippled(new Set()), 4000);
+    return () => clearTimeout(t);
+  }, [rippled]);
 
   const move = useActionMutation("move-notes", {
     onError: (error, input) => {
@@ -177,6 +218,7 @@ export function Board({ boardId, search, onCounts }: BoardProps) {
   };
 
   const pending = corrections.data?.pending ?? 0;
+  const proposalOpen = revision.data?.proposal?.status === "proposed";
   const askAgent = () =>
     sendToAgentChat({
       message: selected.size ? `About these ${selected.size} reports: ` : "",
@@ -204,21 +246,36 @@ export function Board({ boardId, search, onCounts }: BoardProps) {
         </div>
 
         <div className="flex items-center gap-2 flex-shrink-0">
-          {pending > 0 && (
+          {resort?.status === "running" && (
+            <span className="h-8 px-3 rounded-md bg-muted flex items-center gap-2 text-muted-foreground text-sm" role="status">
+              <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+              Re-sorting{resort.total ? ` ${resort.progress}/${resort.total}` : ""}
+            </span>
+          )}
+          {revision.data?.undoable && resort?.status !== "running" && (
             <button
               type="button"
-              onClick={() =>
-                sendToAgentChat({
-                  message: "Learn from the notes I moved on this board and propose a codebook revision.",
-                  context: JSON.stringify({ boardId }),
-                  submit: true,
-                  openSidebar: true,
-                })
+              disabled={undo.isPending}
+              onClick={() => undo.mutate({ boardId })}
+              title={`Undo codebook v${revision.data.undoable.version}: every card goes back exactly`}
+              className="h-8 px-3 rounded-md bg-muted flex items-center gap-2 text-foreground text-sm font-medium hover:bg-muted/70 disabled:opacity-60"
+            >
+              <Undo2 className="h-4 w-4" aria-hidden="true" />
+              Undo v{revision.data.undoable.version}
+            </button>
+          )}
+          {(proposalOpen || pending > 0) && (
+            <button
+              type="button"
+              onClick={() => setTeachOpen(true)}
+              className={
+                proposalOpen
+                  ? "h-8 px-3 rounded-md bg-foreground text-background flex items-center gap-2 text-sm font-medium hover:opacity-90"
+                  : "h-8 px-3 rounded-md bg-muted flex items-center gap-2 text-foreground text-sm font-medium hover:bg-muted/70"
               }
-              className="h-8 px-3 rounded-md bg-muted flex items-center gap-2 text-foreground text-sm font-medium hover:bg-muted/70"
             >
               <Sparkles className="h-4 w-4" aria-hidden="true" />
-              Teach the agent ({pending})
+              {proposalOpen ? "Review the agent's proposal" : `Teach the agent (${pending})`}
             </button>
           )}
           <button
@@ -248,7 +305,9 @@ export function Board({ boardId, search, onCounts }: BoardProps) {
             key={column.id}
             column={column}
             selected={selected}
+            rippled={rippled}
             onSelect={onSelect}
+            onOpenProblem={setOpenProblem}
             onDrop={handleDrop}
             onTaskDragStart={(e, report) => {
               e.dataTransfer.setData("noteId", report.id);
@@ -265,6 +324,8 @@ export function Board({ boardId, search, onCounts }: BoardProps) {
         problems={themes.map((t) => ({ id: t.themeId, name: t.name }))}
         onOpenChange={(o) => !o && setOpenNote(null)}
       />
+      <ProblemDrawer boardId={boardId} themeId={openProblem} onOpenChange={(o) => !o && setOpenProblem(null)} />
+      <RevisionSheet boardId={boardId} open={teachOpen} onOpenChange={setTeachOpen} />
     </div>
   );
 }

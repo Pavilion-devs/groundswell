@@ -395,10 +395,11 @@
 
 /* Groundswell addition: notes the agent moved on its own after you taught it. */
 @keyframes gs-ripple {
-  0% { box-shadow: 0 0 0 0 hsl(var(--primary) / 0.45); }
-  100% { box-shadow: 0 0 0 10px hsl(var(--primary) / 0); }
+  0% { box-shadow: 0 0 0 0 hsl(var(--primary) / 0.55); background-color: hsl(var(--accent)); }
+  70% { background-color: hsl(var(--accent) / 0.4); }
+  100% { box-shadow: 0 0 0 12px hsl(var(--primary) / 0); }
 }
-.gs-app .task-card.rippled { animation: gs-ripple 1.2s ease-out 2; }
+.gs-app .task-card.rippled { animation: gs-ripple 1.3s ease-out 3; }
 
 /* Twisky marketing page (components/marketing), scoped to .gs-app like the rest. */
 .gs-app .cosmic-gradient {

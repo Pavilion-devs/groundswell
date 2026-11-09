@@ -306,12 +306,12 @@ Each phase ends with a working, demoable app.
 - [x] Board: problems ranked by SQL as columns, then Unsorted, then internal groups; cards are reports with verified quotes; native drag and drop calls `move-notes` (pin + correction + "Teach the agent"); click/cmd-click selection written to app state; optimistic moves with live sync (verified: a drag recorded a real correction)
 - [x] Dashboard home (Twisky stat cards: reports, problems, need review, rising; ranked problems from SQL; recent agent runs)
 - [x] Report drawer (Twisky ConversationDrawer: full report with the verified quote highlighted, agent's placement + confidence + rationale, change problem, open on GitHub, ask the agent)
-- [ ] Problem drawer: brief, evidence quotes, file issue (dry run first)
+- [x] Problem drawer (column title, dashboard row or brief opens it): SQL score breakdown bars, the brief with verified quotes, Copy Markdown, Revise with the agent, Write the brief (agent), File as GitHub issue = dry-run preview → editable repo → second confirm naming the repo → post
 - [x] Review: Unsorted reports with the agent's guess; Accept or choose a problem (pinned, recorded as a correction)
-- [ ] Briefs, Sources, Automations pages
-- [ ] Ripple animation for notes the agent moved after a revision; codebook diff review in the UI
+- [x] Briefs (latest brief per problem, top problems without one, "write briefs for the top 3"), Sources (sync GitHub, import repo / CSV file / pasted text, "Sort them" hands new reports to the agent), Automations (framework automations for this board with on/off switches, copy webhook URL, set-up buttons, digest history). New read actions: `list-briefs`, `list-digests`; `get-board` runs carry `movedNoteIds`
+- [x] Codebook diff review ("Teach the agent" sheet: before/after definitions and rules, why, the moves it learned from, Apply and re-sort → agent runs the re-sort, Reject with reason) + "Undo vN" on the board + "Re-sorting n/total" pill + ripple: cards the agent moved flash once per run and the board scrolls to the first (verified on the real v3 re-sort's 23 moves)
 - [x] Landing page from Twisky's marketing components (`/` and `/home`, public, one CTA to the dashboard, hero board is a dated snapshot of the real board; `rootAuth: false` so `/` is no longer the sign-in page)
-- [ ] Public share link; MCP App card (stretch)
+- [ ] Public share link; MCP App card (stretch; the share link folds into Phase 7 demo mode)
 - **Done when:** every engine action is reachable from the UI and the demo script runs end to end.
 
 ### Phase 7 — Polish, deploy, submit
