@@ -26,6 +26,8 @@
     "@ai-sdk/groq": "^3.0.35",
     "@ai-sdk/mistral": "^3.0.40",
     "@ai-sdk/openai": "^3.0.53",
+    "@anthropic-ai/bedrock-sdk": "1.1.0",
+    "@anthropic-ai/sdk": "1.3.0",
     "@electric-sql/pglite": "^0.5.8",
     "@fontsource-variable/inter": "^5.2.8",
     "@openrouter/ai-sdk-provider": "^2.9.1",

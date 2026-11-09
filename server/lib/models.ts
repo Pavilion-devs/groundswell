@@ -23,3 +23,15 @@ export const META_MODELS = {
   default: "muse-spark-1.3",
   others: ["muse-spark-1.1", "muse-wonder-1.0"],
 } as const;
+
+/**
+ * The active engine since 2026-11-09: Claude on Amazon Bedrock (see
+ * server/lib/bedrock-engine.ts). Bedrock ids are inference profiles.
+ */
+/** Bedrock region the inference profiles above live in. */
+export const BEDROCK_REGION = "us-east-1";
+
+export const BEDROCK_MODELS = {
+  default: "us.anthropic.claude-sonnet-4-6",
+  others: ["us.anthropic.claude-haiku-4-5-20251001-v1:0", "us.anthropic.claude-opus-4-6-v1"],
+} as const;

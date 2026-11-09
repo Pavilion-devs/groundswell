@@ -6,6 +6,7 @@ import {
 
 import actionsRegistry from "../../.generated/actions-registry.js";
 import "../lib/meta-engine.js";
+import "../lib/bedrock-engine.js";
 import {
   searchConversationReferences,
   validateConversationReferences,

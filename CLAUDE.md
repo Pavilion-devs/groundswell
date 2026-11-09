@@ -31,12 +31,12 @@ Keep model ids in one config module (`server/lib/models.ts`):
 - Revisions, briefs: `claude-sonnet-5-5`
 - Classification, re-sort, duplicates: `claude-haiku-5-5`
 
-**Current agent engine (since 2026-11-08): Meta `muse-spark-1.3`.** Anthropic credits ran out. `server/lib/meta-engine.ts` registers the `meta` engine (OpenAI-compatible Meta Model API, key from `META_API_KEY`, resolved per request) and selects it with runtime `defineAppConfig` so chat, sub-agents and background automations all use it (`agent-native.config.ts` is build config and does not reach engine resolution). To go back to Claude, change that `defineAppConfig` line to `engine: "anthropic"`.
+**Current agent engine (since 2026-11-09): Claude Sonnet 4.6 on Amazon Bedrock** (`us.anthropic.claude-sonnet-4-6`, us-east-1). `server/lib/bedrock-engine.ts` registers the `bedrock` engine: the framework's Anthropic (AI SDK) engine with a custom fetch that hands each Messages call to `@anthropic-ai/bedrock-sdk`, signed by the AWS SDK default credential chain (locally the `aws login` CLI session, in production the deployment's AWS role or keys; no key stored by the app). It is selected with runtime `defineAppConfig` so chat, sub-agents and automations all use it. If the AWS session expires, run `aws login` again. The Meta engine (`server/lib/meta-engine.ts`, `META_API_KEY`) stays registered as an alternative; Sonnet 5.5 is not enabled on this AWS account.
 
 ## Environment
 
 - Node **≥ 22.22** and pnpm (machine currently has Node 20.20; upgrade before scaffolding).
-- LLM: `META_API_KEY` in `.env` (current engine), or `ANTHROPIC_API_KEY` / Builder.io connect.
+- LLM: an AWS session with Bedrock access to Claude Sonnet 4.6 (current engine; `aws login`), or `META_API_KEY` / `ANTHROPIC_API_KEY` / Builder.io connect.
 - `GITHUB_TOKEN` (optional for import rate limits, required for filing issues).
 - `AGENT_NATIVE_SELF_DISPATCH_URL=http://localhost:8080` in `.env` for local dev, so background automations reach the dev server (without it they dispatch to port 3000).
 - Never run `file-github-issue` for real without the user's explicit go-ahead and target repo; use `dryRun` to test.
