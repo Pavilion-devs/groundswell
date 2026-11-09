@@ -67,9 +67,14 @@ export function renderBriefMarkdown(input: {
     ...(metrics.rank ? [`| Priority | #${metrics.rank} on the board (score ${metrics.score}/100) |`] : []),
   ];
   const quotes = evidence.map((e) => {
-    const who = e.author ? ` (@${e.author})` : "";
+    // A profile link credits the reporter without an @mention, which would
+    // notify every quoted person when the brief is filed in a public repo.
+    const who = e.author ? ` by [${e.author}](https://github.com/${encodeURIComponent(e.author)})` : "";
     const source = e.url ? `[${e.title}](${e.url})` : e.title;
-    const lines = [`> ${e.quote.replace(/\n+/g, " ")}`, `>`, `> — ${source}${who}`];
+    // Same reason for @handles inside a quote: a zero-width space keeps the text
+    // looking verbatim but stops GitHub from turning it into a mention.
+    const quote = e.quote.replace(/\n+/g, " ").replace(/@(?=[A-Za-z0-9-])/g, "@\u200b");
+    const lines = [`> ${quote}`, `>`, `> — ${source}${who}`];
     if (e.why) lines.push("", `_${e.why}_`);
     return lines.join("\n");
   });

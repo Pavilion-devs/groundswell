@@ -140,8 +140,21 @@ describe("renderBriefMarkdown", () => {
     });
     expect(md).toContain("## Docs pages 404");
     expect(md).toContain("> the site 404s on a ton of docs/ pages.");
-    expect(md).toContain("[Heads up](https://x/1) (@ann)");
+    expect(md).toContain("[Heads up](https://x/1) by [ann](https://github.com/ann)");
+    expect(md).not.toContain("@ann");
     expect(md).toContain("| Distinct problems (duplicates collapsed) | 12 |");
     expect(md).toContain("#1 on the board (score 92.5/100)");
+  });
+
+  it("stops @handles inside quotes from becoming mentions", () => {
+    const md = renderBriefMarkdown({
+      title: "T",
+      themeName: "X",
+      boardTitle: "B",
+      body: { problem: "p", impact: "i", evidence: [], nextStep: "n" },
+      evidence: [{ quote: "cc @renan please look", why: null, title: "t", url: null, author: null }],
+      metrics: { notes: 1, uniqueProblems: 1, reporters: 1, engagement: 0, recent: 0, rank: null, score: 0, firstReported: null, lastReported: null, duplicateGroups: 0 },
+    });
+    expect(md).toContain("cc @\u200brenan please look");
   });
 });
