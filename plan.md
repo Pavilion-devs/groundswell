@@ -315,6 +315,7 @@ Each phase ends with a working, demoable app.
 - **Done when:** every engine action is reachable from the UI and the demo script runs end to end.
 
 ### Phase 7 — Polish, deploy, submit
+- [x] Agent engine moved to **Claude Sonnet 4.6 on Amazon Bedrock** (2026-11-09; Meta key stopped working): `server/lib/bedrock-engine.ts`, AWS credentials from the default chain. Deploy needs AWS credentials with Bedrock access in the host's environment.
 - [ ] Design pass (light/dark, empty states, loading, errors, onboarding tour)
 - [ ] Deploy (Vercel + Neon), demo mode, seeded board
 - [ ] README: problem, how it works, architecture, **pre-existing vs. new work disclosure**, run instructions
