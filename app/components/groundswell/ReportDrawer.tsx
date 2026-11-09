@@ -137,14 +137,11 @@ export function ReportDrawer({ boardId, noteId, problems, onOpenChange }: Report
                 <Button
                   size="sm"
                   className="gap-1"
-                  onClick={() =>
-                    sendToAgentChat({
-                      message: `About the report "${n.title ?? ""}": `,
-                      context: JSON.stringify({ boardId, noteId: n.id }),
-                      submit: false,
-                      openSidebar: true,
-                    })
-                  }
+                  onClick={() => {
+                    // Close the drawer first: the agent panel cannot take a message while a modal sheet is open.
+                    onOpenChange(false);
+                    setTimeout(() => sendToAgentChat({ message: `About the report "${n.title ?? ""}": `, context: JSON.stringify({ boardId, noteId: n.id }), submit: false, openSidebar: true }), 200);
+                  }}
                 >
                   <Sparkles className="h-3.5 w-3.5" /> Ask the agent
                 </Button>

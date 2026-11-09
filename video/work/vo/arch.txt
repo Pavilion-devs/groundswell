@@ -1,0 +1,1 @@
+Under the hood, the agent only acts through the app's actions: the same ones the board, the chat and MCP use. The server checks every quote, SQL computes every number, and a human approves anything that leaves the app. It all runs on Claude Sonnet 4.6, through Amazon Bedrock.

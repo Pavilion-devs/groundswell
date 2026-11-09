@@ -1,0 +1,224 @@
+[
+  {
+    "id": "w0",
+    "text": "Point",
+    "start": 0.299,
+    "end": 0.512
+  },
+  {
+    "id": "w1",
+    "text": "it",
+    "start": 0.555,
+    "end": 0.64
+  },
+  {
+    "id": "w2",
+    "text": "at",
+    "start": 0.683,
+    "end": 0.725
+  },
+  {
+    "id": "w3",
+    "text": "a",
+    "start": 0.768,
+    "end": 0.8107
+  },
+  {
+    "id": "w4",
+    "text": "repo",
+    "start": 0.853,
+    "end": 1.024
+  },
+  {
+    "id": "w5",
+    "text": "and",
+    "start": 1.323,
+    "end": 1.4507
+  },
+  {
+    "id": "w6",
+    "text": "ask.",
+    "start": 1.493,
+    "end": 2.048
+  },
+  {
+    "id": "w7",
+    "text": "The",
+    "start": 2.389,
+    "end": 2.4747
+  },
+  {
+    "id": "w8",
+    "text": "agent",
+    "start": 2.517,
+    "end": 2.816
+  },
+  {
+    "id": "w9",
+    "text": "imports",
+    "start": 2.987,
+    "end": 3.2427
+  },
+  {
+    "id": "w10",
+    "text": "every",
+    "start": 3.328,
+    "end": 3.541
+  },
+  {
+    "id": "w11",
+    "text": "issue,",
+    "start": 3.627,
+    "end": 4.032
+  },
+  {
+    "id": "w12",
+    "text": "drafts",
+    "start": 4.309,
+    "end": 4.608
+  },
+  {
+    "id": "w13",
+    "text": "a",
+    "start": 4.651,
+    "end": 4.693
+  },
+  {
+    "id": "w14",
+    "text": "codebook",
+    "start": 4.736,
+    "end": 5.077
+  },
+  {
+    "id": "w15",
+    "text": "of",
+    "start": 5.12,
+    "end": 5.1627
+  },
+  {
+    "id": "w16",
+    "text": "problems,",
+    "start": 5.205,
+    "end": 5.632
+  },
+  {
+    "id": "w17",
+    "text": "and",
+    "start": 5.845,
+    "end": 6.101
+  },
+  {
+    "id": "w18",
+    "text": "sends",
+    "start": 6.144,
+    "end": 6.3147
+  },
+  {
+    "id": "w19",
+    "text": "four",
+    "start": 6.443,
+    "end": 6.656
+  },
+  {
+    "id": "w20",
+    "text": "sorters",
+    "start": 6.784,
+    "end": 7.125
+  },
+  {
+    "id": "w21",
+    "text": "out",
+    "start": 7.211,
+    "end": 7.381
+  },
+  {
+    "id": "w22",
+    "text": "in",
+    "start": 7.467,
+    "end": 7.509
+  },
+  {
+    "id": "w23",
+    "text": "parallel.",
+    "start": 7.595,
+    "end": 8.277
+  },
+  {
+    "id": "w24",
+    "text": "Each",
+    "start": 8.533,
+    "end": 8.661
+  },
+  {
+    "id": "w25",
+    "text": "card",
+    "start": 8.789,
+    "end": 9.0027
+  },
+  {
+    "id": "w26",
+    "text": "lands",
+    "start": 9.131,
+    "end": 9.2587
+  },
+  {
+    "id": "w27",
+    "text": "with",
+    "start": 9.387,
+    "end": 9.472
+  },
+  {
+    "id": "w28",
+    "text": "a",
+    "start": 9.515,
+    "end": 9.557
+  },
+  {
+    "id": "w29",
+    "text": "quote,",
+    "start": 9.6,
+    "end": 9.877
+  },
+  {
+    "id": "w30",
+    "text": "or",
+    "start": 9.984,
+    "end": 10.2827
+  },
+  {
+    "id": "w31",
+    "text": "stays",
+    "start": 10.325,
+    "end": 10.624
+  },
+  {
+    "id": "w32",
+    "text": "in",
+    "start": 10.667,
+    "end": 10.709
+  },
+  {
+    "id": "w33",
+    "text": "Unsorted",
+    "start": 10.752,
+    "end": 11.1787
+  },
+  {
+    "id": "w34",
+    "text": "when",
+    "start": 11.307,
+    "end": 11.4347
+  },
+  {
+    "id": "w35",
+    "text": "nothing",
+    "start": 11.52,
+    "end": 11.6907
+  },
+  {
+    "id": "w36",
+    "text": "fits.",
+    "start": 11.861,
+    "end": 12.289
+  }
+]

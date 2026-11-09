@@ -1,0 +1,79 @@
+<template>
+  <style>
+    @font-face { font-family: "Excalifont"; src: url("assets/fonts/excalifont.woff2") format("woff2"); }
+    #root { position: absolute; inset: 0; background: #ffffff; overflow: hidden; font-family: "Excalifont", sans-serif; color: #1e1e1e; }
+    #hk-svg { position: absolute; inset: 0; width: 1920px; height: 1080px; }
+    .hk-t { position: absolute; white-space: nowrap; line-height: 1.1; }
+    #hk-q { left: 0; right: 0; top: 70px; text-align: center; font-size: 60px; }
+    #hk-count { left: 150px; top: 760px; font-size: 46px; }
+    #hk-days { left: 150px; top: 830px; font-size: 38px; color: #e03131; }
+    #hk-chip { left: 1020px; top: 230px; padding: 6px 22px 8px; border: 3px solid #e8590c; color: #e8590c; border-radius: 14px; font-size: 34px; }
+    #hk-ai { left: 1092px; top: 474px; font-size: 40px; }
+    #hk-out1 { left: 1462px; top: 395px; font-size: 32px; }
+    #hk-out2 { left: 1462px; top: 462px; font-size: 38px; }
+    #hk-out3 { left: 1462px; top: 548px; font-size: 29px; color: #495057; }
+    #hk-q1 { left: 1838px; top: 446px; font-size: 64px; color: #e03131; }
+    #hk-q2 { left: 1838px; top: 532px; font-size: 64px; color: #e03131; }
+    .card-t { position: absolute; font-size: 22px; color: #495057; white-space: nowrap; }
+  </style>
+  <div id="root" data-composition-id="hook" data-width="1920" data-height="1080" data-duration="13">
+    <div id="hk-frame" class="clip" data-start="0" data-duration="13">
+      <svg id="hk-svg" viewBox="0 0 1920 1080" xmlns="http://www.w3.org/2000/svg"></svg>
+      <div id="hk-q" class="hk-t">Which problems actually matter?</div>
+      <div id="hk-count" class="hk-t">340 GitHub issues</div>
+      <div id="hk-days" class="hk-t">reading them all: days</div>
+      <div id="hk-chip" class="hk-t">The catch</div>
+      <div id="hk-ai" class="hk-t">AI summary</div>
+      <div id="hk-out1" class="hk-t">Top theme:</div>
+      <div id="hk-out2" class="hk-t">"setup" &middot; 31%</div>
+      <div id="hk-out3" class="hk-t">"users hate the setup"</div>
+      <div id="hk-q1" class="hk-t">?</div>
+      <div id="hk-q2" class="hk-t">?</div>
+    </div>
+  </div>
+  <script>
+    (function () {
+      const S = "#hk-svg", G = "#adb5bd";
+      // a heap of issue cards: each a rectangle with a "#1234" stub and two scribble lines
+      const spots = [[150, 300, -4], [330, 260, 3], [510, 320, -2], [220, 470, 5], [410, 450, -6], [600, 500, 2],
+                     [160, 610, -3], [360, 620, 4], [560, 660, -5], [700, 360, 6], [760, 560, -2], [250, 380, 7]];
+      const cards = spots.map(([x, y, a], i) => {
+        const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+        g.setAttribute("transform", `rotate(${a} ${x + 80} ${y + 50})`);
+        document.querySelector(S).appendChild(g);
+        SK.rect(g, x, y, 170, 104, { strokeWidth: 2.4 });
+        SK.line(g, x + 18, y + 30, x + 120, y + 30, { strokeWidth: 3.2 });
+        SK.line(g, x + 18, y + 58, x + 150, y + 58, { stroke: G, strokeWidth: 2.2 });
+        SK.line(g, x + 18, y + 80, x + 110, y + 80, { stroke: G, strokeWidth: 2.2 });
+        return g;
+      });
+      const a1 = SK.arrow(S, 900, 500, 1060, 500, { strokeWidth: 3 });
+      const box = SK.rect(S, 1060, 420, 260, 150, { strokeWidth: 3.4, fill: "#f1f3f5", fillStyle: "solid" });
+      const a2 = SK.arrow(S, 1330, 500, 1460, 500, { strokeWidth: 3 });
+      const out = SK.rect(S, 1440, 380, 460, 240, { strokeWidth: 3 });
+
+      const tl = gsap.timeline({ paused: true });
+      // 0.3 "hundreds of GitHub issues": cards drop into a heap
+      cards.forEach((g, i) => {
+        tl.fromTo(g, { y: -380, opacity: 0 }, { y: 0, opacity: 1, duration: 0.45, ease: "bounce.out" }, 0.3 + i * 0.13);
+      });
+      SK.write(tl, "#hk-count", 2.0, 0.6);
+      // 3.0 "Which problems actually matter?"
+      SK.write(tl, "#hk-q", 3.0, 1.1);
+      // 5.4 "Reading them all takes days."
+      SK.write(tl, "#hk-days", 5.5, 0.8);
+      // 7.2 "Asking an AI to summarise is fast"
+      tl.fromTo("#hk-chip", { opacity: 0, y: -10 }, { opacity: 1, y: 0, duration: 0.35, ease: "back.out(1.8)" }, 7.0);
+      SK.on(tl, a1, 7.3, 0.35);
+      tl.fromTo(box, { opacity: 0 }, { opacity: 1, duration: 0.3 }, 7.5); SK.on(tl, box, 7.5, 0.5); SK.write(tl, "#hk-ai", 7.7, 0.5);
+      SK.on(tl, a2, 8.2, 0.3);
+      SK.on(tl, out, 8.4, 0.5);
+      SK.write(tl, "#hk-out1", 8.6, 0.4); SK.write(tl, "#hk-out2", 8.9, 0.5); SK.write(tl, "#hk-out3", 9.3, 0.6);
+      // 9.6 "but you can't check its quotes, or its numbers"
+      tl.fromTo("#hk-q2", { opacity: 0, scale: 1.6 }, { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(2)" }, 10.6);
+      tl.fromTo("#hk-q1", { opacity: 0, scale: 1.6 }, { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(2)" }, 11.6);
+      tl.to("#hk-frame", { opacity: 0, filter: "blur(8px)", duration: 0.3, ease: "power3.in" }, 12.65);
+      window.__timelines["hook"] = tl;
+    })();
+  </script>
+</template>

@@ -29,8 +29,9 @@ const PARTS = [
 
 type Preview = { repo: string; title: string; body: string; labels: string[] };
 
-function askAgent(message: string, context: Record<string, unknown>, submit: boolean) {
-  sendToAgentChat({ message, context: JSON.stringify(context), submit, openSidebar: true });
+function sendLater(message: string, context: Record<string, unknown>, submit: boolean) {
+  // Let the drawer close first: the agent panel cannot take a message while a modal sheet is open.
+  setTimeout(() => sendToAgentChat({ message, context: JSON.stringify(context), submit, openSidebar: true }), 200);
 }
 
 export function ProblemDrawer({ boardId, themeId, onOpenChange }: ProblemDrawerProps) {
@@ -67,6 +68,10 @@ export function ProblemDrawer({ boardId, themeId, onOpenChange }: ProblemDrawerP
     onError: (e) => toast.error(e instanceof Error ? e.message : "Filing did not work."),
   });
 
+  const askAgent = (message: string, context: Record<string, unknown>, submit: boolean) => {
+    onOpenChange(false);
+    sendLater(message, context, submit);
+  };
   const theme = priorities.data?.themes.find((t) => t.themeId === themeId) ?? null;
   const b = brief.data?.brief ?? null;
   const notes = context.data?.notes.filter((n) => n.quote) ?? [];

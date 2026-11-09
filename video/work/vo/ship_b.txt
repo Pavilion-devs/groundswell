@@ -1,0 +1,1 @@
+Filing previews the issue first, makes me name the repository, and waits for my confirmation. This one goes to a private sandbox, and the brief links back to it.

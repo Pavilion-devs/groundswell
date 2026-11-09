@@ -1,0 +1,19 @@
+{
+ "total": 190.7,
+ "offsets": {
+  "hook": 0.3,
+  "intro": 13.3,
+  "team": 21.7,
+  "sort": 28.8,
+  "quotes": 47.3,
+  "teach_b": 76.8,
+  "teach_c": 88.1,
+  "teach_a": 64.2,
+  "ship_b": 121.3,
+  "ship_a": 103.8,
+  "auto": 136.7,
+  "arch": 147.8,
+  "results": 166.4,
+  "end": 184.2
+ }
+}

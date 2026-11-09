@@ -1,0 +1,1 @@
+Point it at a repo and ask. The agent imports every issue, drafts a codebook of problems, and sends four sorters out in parallel. Each card lands with a quote, or stays in Unsorted when nothing fits.

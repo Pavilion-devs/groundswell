@@ -32,6 +32,6 @@ export const META_MODELS = {
 export const BEDROCK_REGION = "us-east-1";
 
 export const BEDROCK_MODELS = {
-  default: "us.anthropic.claude-sonnet-4-6",
-  others: ["us.anthropic.claude-haiku-4-5-20251001-v1:0", "us.anthropic.claude-opus-4-6-v1"],
+  default: "global.anthropic.claude-sonnet-4-6",
+  others: ["us.anthropic.claude-sonnet-4-6", "us.anthropic.claude-haiku-4-5-20251001-v1:0", "us.anthropic.claude-opus-4-6-v1"],
 } as const;

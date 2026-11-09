@@ -1,0 +1,49 @@
+<template>
+  <style>
+    @font-face { font-family: "Excalifont"; src: url("assets/fonts/excalifont.woff2") format("woff2"); }
+    #root { position: absolute; inset: 0; background: #0f141a; overflow: hidden; font-family: "Excalifont", sans-serif; }
+    #ship-cam { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; transform-origin: 0 0; }
+    #ship-cam video { position: absolute; inset: 0; width: 1920px; height: 1080px; }
+    #ship-svg { position: absolute; inset: 0; width: 1920px; height: 1080px; overflow: visible; }
+    #ship-chip { position: absolute; left: 0; right: 0; top: 12px; text-align: center; }
+    #ship-chip span { display: inline-block; padding: 6px 24px 8px; background: #ffffff; border: 3px solid #1971c2; color: #1971c2;
+                    border-radius: 14px; font-size: 36px; }
+    #root .note { position: absolute; padding: 6px 18px 8px; background: #ffffff; border: 3px solid #1971c2; color: #1e1e1e;
+                  border-radius: 12px; font-size: 32px; white-space: nowrap; }
+    #root .speed { position: absolute; right: 40px; top: 18px; padding: 4px 16px 6px; background: #ffffff; border: 2px solid #1e1e1e;
+                   color: #1e1e1e; border-radius: 12px; font-size: 30px; }
+  </style>
+  <div id="root" data-composition-id="ship" data-width="1920" data-height="1080" data-duration="33.0">
+    <div id="ship-frame" data-layout-allow-overflow>
+      <div id="ship-cam">
+        <video id="ship-v0" class="clip" src="assets/clips/ship.mp4" data-start="0" data-duration="33.0" data-media-start="0" muted playsinline></video>
+        <svg id="ship-svg" viewBox="0 0 1920 1080" xmlns="http://www.w3.org/2000/svg"></svg>
+      </div>
+      <div id="ship-chip"><span>4 &middot; Ship it as an issue</span></div>
+
+      <div id="sh-n1" class="note" style="left:560px;top:860px">the agent writes it &middot; sped up 9&times;</div>
+      <div id="sh-n2" class="note" style="left:560px;top:860px">problem &middot; impact &middot; verified quotes &middot; next step</div>
+      <div id="sh-n3" class="note" style="left:560px;top:860px">nothing is posted until you name the repo and confirm</div>
+      <div id="sh-n4" class="note" style="left:560px;top:860px">filed: Pavilion-devs/groundswell-sandbox #2</div>
+    </div>
+  </div>
+  <script>
+    (function () {
+      const S = "#ship-svg", C = "#1971c2";
+      const r0 = SK.rect(S, 1100, 528, 262, 30, { stroke: C, strokeWidth: 5, roughness: 1.6, bowing: 1.4 });
+      const r1 = SK.rect(S, 1191, 567, 692, 46, { stroke: C, strokeWidth: 5, roughness: 1.6, bowing: 1.4 });
+      const tl = gsap.timeline({ paused: true });
+      tl.fromTo("#ship-cam", { opacity: 0 }, { opacity: 1, duration: 0.3, ease: "power2.out" }, 0);
+      tl.fromTo("#ship-chip span", { opacity: 0, y: -12 }, { opacity: 1, y: 0, duration: 0.4, ease: "back.out(1.8)" }, 0.3);
+      SK.on(tl, r0, 18.4, 0.5, "power3.out"); tl.to(r0, { opacity: 0, duration: 0.3 }, 25.2);
+      SK.on(tl, r1, 20.2, 0.5, "power3.out"); tl.to(r1, { opacity: 0, duration: 0.3 }, 26.7);
+      tl.fromTo("#sh-n1", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.35, ease: "power3.out" }, 1.6); tl.to("#sh-n1", { opacity: 0, duration: 0.3 }, 9.3);
+      tl.fromTo("#sh-n2", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.35, ease: "power3.out" }, 11.6); tl.to("#sh-n2", { opacity: 0, duration: 0.3 }, 16.7);
+      tl.fromTo("#sh-n3", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.35, ease: "power3.out" }, 18.6); tl.to("#sh-n3", { opacity: 0, duration: 0.3 }, 26.7);
+      tl.fromTo("#sh-n4", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.35, ease: "power3.out" }, 29.8);
+
+      tl.to("#ship-frame", { opacity: 0, duration: 0.3, ease: "power2.in" }, 32.7);
+      window.__timelines["ship"] = tl;
+    })();
+  </script>
+</template>

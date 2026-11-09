@@ -1,0 +1,1 @@
+Groundswell is an agent-native app where you and an agent shape the same board, and every quote and every number can be checked.

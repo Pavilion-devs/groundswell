@@ -1,0 +1,188 @@
+[
+  {
+    "id": "w0",
+    "text": "Agent-Native",
+    "start": 0.299,
+    "end": 0.768
+  },
+  {
+    "id": "w1",
+    "text": "has",
+    "start": 0.981,
+    "end": 1.109
+  },
+  {
+    "id": "w2",
+    "text": "hundreds",
+    "start": 1.152,
+    "end": 1.621
+  },
+  {
+    "id": "w3",
+    "text": "of",
+    "start": 1.664,
+    "end": 1.7067
+  },
+  {
+    "id": "w4",
+    "text": "GitHub",
+    "start": 1.792,
+    "end": 2.048
+  },
+  {
+    "id": "w5",
+    "text": "issues.",
+    "start": 2.133,
+    "end": 2.603
+  },
+  {
+    "id": "w6",
+    "text": "Which",
+    "start": 2.987,
+    "end": 3.2427
+  },
+  {
+    "id": "w7",
+    "text": "problems",
+    "start": 3.328,
+    "end": 3.541
+  },
+  {
+    "id": "w8",
+    "text": "actually",
+    "start": 3.797,
+    "end": 4.0107
+  },
+  {
+    "id": "w9",
+    "text": "matter?",
+    "start": 4.267,
+    "end": 4.907
+  },
+  {
+    "id": "w10",
+    "text": "Reading",
+    "start": 5.376,
+    "end": 5.589
+  },
+  {
+    "id": "w11",
+    "text": "them",
+    "start": 5.675,
+    "end": 5.76
+  },
+  {
+    "id": "w12",
+    "text": "all",
+    "start": 5.803,
+    "end": 5.9307
+  },
+  {
+    "id": "w13",
+    "text": "takes",
+    "start": 6.016,
+    "end": 6.1867
+  },
+  {
+    "id": "w14",
+    "text": "days.",
+    "start": 6.272,
+    "end": 6.827
+  },
+  {
+    "id": "w15",
+    "text": "Asking",
+    "start": 7.168,
+    "end": 7.381
+  },
+  {
+    "id": "w16",
+    "text": "an",
+    "start": 7.552,
+    "end": 7.637
+  },
+  {
+    "id": "w17",
+    "text": "AI",
+    "start": 7.68,
+    "end": 7.936
+  },
+  {
+    "id": "w18",
+    "text": "to",
+    "start": 8.021,
+    "end": 8.1067
+  },
+  {
+    "id": "w19",
+    "text": "summarise",
+    "start": 8.149,
+    "end": 8.576
+  },
+  {
+    "id": "w20",
+    "text": "is",
+    "start": 8.704,
+    "end": 8.7467
+  },
+  {
+    "id": "w21",
+    "text": "fast,",
+    "start": 8.832,
+    "end": 9.365
+  },
+  {
+    "id": "w22",
+    "text": "but",
+    "start": 9.643,
+    "end": 9.813
+  },
+  {
+    "id": "w23",
+    "text": "you",
+    "start": 9.856,
+    "end": 9.8987
+  },
+  {
+    "id": "w24",
+    "text": "can't",
+    "start": 9.941,
+    "end": 10.1547
+  },
+  {
+    "id": "w25",
+    "text": "check",
+    "start": 10.24,
+    "end": 10.411
+  },
+  {
+    "id": "w26",
+    "text": "its",
+    "start": 10.453,
+    "end": 10.5387
+  },
+  {
+    "id": "w27",
+    "text": "quotes,",
+    "start": 10.624,
+    "end": 11.051
+  },
+  {
+    "id": "w28",
+    "text": "or",
+    "start": 11.179,
+    "end": 11.392
+  },
+  {
+    "id": "w29",
+    "text": "its",
+    "start": 11.435,
+    "end": 11.477
+  },
+  {
+    "id": "w30",
+    "text": "numbers.",
+    "start": 11.563,
+    "end": 12.033968253968254
+  }
+]

@@ -1,0 +1,1 @@
+And it keeps working while you're away. A GitHub webhook sorts new issues as they arrive, and a weekly digest reports what changed, through the same actions.

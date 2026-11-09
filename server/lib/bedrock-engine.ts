@@ -21,6 +21,7 @@ export const BEDROCK_ENGINE_NAME = "bedrock";
 /** Placeholder origin the engine "calls"; requests never leave for it. */
 const BEDROCK_BASE_URL = "https://bedrock.groundswell.invalid/v1";
 const NO_API_KEY = "aws-credentials";
+const MAX_OUTPUT_TOKENS = 8192;
 
 let client: AnthropicBedrock | null = null;
 function bedrock(): AnthropicBedrock {
@@ -49,6 +50,9 @@ async function bedrockFetch(input: Parameters<typeof fetch>[0], init?: Parameter
     return jsonResponse({ type: "error", error: { type: "not_found_error", message: `The Bedrock engine only serves Messages calls, not ${url}` } }, 404);
   }
   const body = JSON.parse(typeof init?.body === "string" ? init.body : new TextDecoder().decode(init?.body as ArrayBuffer));
+  // Bedrock counts each call's max_tokens against the account's token quotas up front. The engine asks for
+  // 64k; agent turns (tool calls, briefs, proposals) stay far below 8k, so cap it to keep the quota for real work.
+  body.max_tokens = Math.min(Number(body.max_tokens) || MAX_OUTPUT_TOKENS, MAX_OUTPUT_TOKENS);
   const beta = new Headers(init?.headers).get("anthropic-beta");
   const options = { ...(init?.signal ? { signal: init.signal } : {}), ...(beta ? { headers: { "anthropic-beta": beta } } : {}) };
   try {

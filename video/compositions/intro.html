@@ -1,0 +1,35 @@
+<template>
+  <style>
+    @font-face { font-family: "Excalifont"; src: url("assets/fonts/excalifont.woff2") format("woff2"); }
+    #root { position: absolute; inset: 0; background: #ffffff; overflow: hidden; font-family: "Excalifont", sans-serif; color: #1e1e1e; }
+    #in-svg { position: absolute; inset: 0; width: 1920px; height: 1080px; }
+    #in-name { position: absolute; left: 0; right: 0; top: 280px; text-align: center; font-size: 200px; line-height: 1; }
+    #in-sub { position: absolute; left: 0; right: 0; top: 580px; text-align: center; font-size: 52px; }
+    #in-check { position: absolute; left: 0; right: 0; top: 660px; text-align: center; font-size: 52px; color: #2f9e44; }
+    #in-foot { position: absolute; left: 0; right: 0; top: 790px; text-align: center; font-size: 32px; color: #6b6b6b; }
+  </style>
+  <div id="root" data-composition-id="intro" data-width="1920" data-height="1080" data-duration="8.4">
+    <div id="in-frame" class="clip" data-start="0" data-duration="8.4">
+      <svg id="in-svg" viewBox="0 0 1920 1080" xmlns="http://www.w3.org/2000/svg"></svg>
+      <div id="in-name">GROUNDSWELL</div>
+      <div id="in-sub">you and an agent shape the same board</div>
+      <div id="in-check">every quote and every number can be checked</div>
+      <div id="in-foot">Builder.io Agent-Native &middot; Claude on Amazon Bedrock &middot; SQL</div>
+    </div>
+  </div>
+  <script>
+    (function () {
+      const S = "#in-svg";
+      const wave = Array.from({ length: 15 }, (_, i) => [470 + i * 70, 518 + Math.sin(i * 1.2) * 9]);
+      const line = SK.curve(S, wave, { stroke: "#1971c2", strokeWidth: 7, roughness: 0.8 });
+      const tl = gsap.timeline({ paused: true });
+      tl.fromTo("#in-name", { opacity: 0, filter: "blur(10px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.5, ease: "expo.out" }, 0.2);
+      SK.on(tl, line, 0.6, 0.7, "power3.out");
+      SK.write(tl, "#in-sub", 2.4, 1.6);
+      SK.write(tl, "#in-check", 5.0, 1.6);
+      tl.fromTo("#in-foot", { opacity: 0 }, { opacity: 1, duration: 0.5, ease: "power2.out" }, 4.4);
+      tl.to("#in-frame", { opacity: 0, filter: "blur(8px)", duration: 0.3, ease: "power3.in" }, 8.05);
+      window.__timelines["intro"] = tl;
+    })();
+  </script>
+</template>
