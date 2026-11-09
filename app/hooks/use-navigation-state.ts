@@ -123,8 +123,10 @@ function pathForView(view?: string): string {
 }
 
 export function pathForCommand(command: any): string {
-  // Until the board UI exists (Phase 6), a board opens in the engine debug view.
-  if ((command?.view === "board" || command?.view === "debug") && typeof command?.boardId === "string") {
+  if (command?.view === "board" && typeof command?.boardId === "string") {
+    return `/boards/${encodeURIComponent(command.boardId)}`;
+  }
+  if (command?.view === "debug" && typeof command?.boardId === "string") {
     return `/debug?board=${encodeURIComponent(command.boardId)}`;
   }
   const path = pathForView(command?.view);

@@ -24,7 +24,7 @@ export default defineAction({
       .enum(["reactions", "newest"])
       .default("reactions")
       .describe('"reactions" (most reacted, then most commented) or "newest"; defaults to "reactions"'),
-    limit: z.coerce.number().int().min(1).max(200).default(50).describe("Page size, 1-200; defaults to 50"),
+    limit: z.coerce.number().int().min(1).max(1000).default(50).describe("Page size, 1-1000 (a board view loads every note at once); defaults to 50"),
     offset: z.coerce.number().int().min(0).default(0).describe("Rows to skip for paging; defaults to 0"),
   }),
   outputSchema: z.object({

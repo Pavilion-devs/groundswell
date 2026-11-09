@@ -92,6 +92,9 @@ function LayoutShell({ children }: LayoutProps) {
   // Settings brings its own navigation, header, and agent toggle, so it
   // renders full width.
   const settingsOwnsChrome = isSettingsPathname(location.pathname);
+  // Groundswell's board pages bring their own sidebar and top bar (ported from
+  // the Twisky dashboard); the agent panel on the right stays.
+  const groundswellOwnsChrome = location.pathname.startsWith("/boards");
   const chatHomeHandoffActive = useAgentChatHomeHandoff({
     storageKey: "chat",
     activePath: location.pathname,
@@ -158,7 +161,7 @@ function LayoutShell({ children }: LayoutProps) {
           className="md:hidden"
           onOpenNavigation={openMobileSidebar}
         />
-      ) : settingsOwnsChrome ? null : (
+      ) : settingsOwnsChrome || groundswellOwnsChrome ? null : (
         <Suspense fallback={<div className="h-12 shrink-0" />}>
           <Header onOpenMobileSidebar={openMobileSidebar} />
         </Suspense>
@@ -172,7 +175,7 @@ function LayoutShell({ children }: LayoutProps) {
   return (
     <HeaderActionsProvider>
       <div className="agent-layout-shell chat-layout-shell flex h-screen w-full overflow-hidden bg-background text-foreground">
-        {settingsOwnsChrome ? null : (
+        {settingsOwnsChrome || groundswellOwnsChrome ? null : (
           <div
             data-collapsed={sidebarCollapsed ? "true" : "false"}
             className="agent-layout-left-drawer hidden md:block"
