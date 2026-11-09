@@ -42,3 +42,5 @@ learnings.md
 .agent-native/
 data/*.lock
 .neon
+.vercel
+.env*.local

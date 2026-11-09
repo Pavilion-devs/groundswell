@@ -8,7 +8,7 @@ for word against the source, and every number comes from SQL, never from the mod
 
 Built for the [Builder.io Agent-Native Hackathon](https://www.builder.io/hackathon) by **Favour Olaboye**.
 
-- **Live app:** _added after deploy_
+- **Live app:** https://groundswell-board.vercel.app (open demo, no sign-in; filing issues is switched off)
 - **Demo video:** _added after upload_
 
 ![The Groundswell board: problems ranked by SQL as columns, reports as cards with verified quotes](docs/board.png)
@@ -90,6 +90,21 @@ Then open the board and ask the agent to sort it, or run `pnpm test` and `pnpm t
 | `GITHUB_TOKEN` | Higher rate limits for imports; required for filing briefs as issues. |
 | `BETTER_AUTH_SECRET` | Stable auth secret for production deploys. |
 | `AGENT_NATIVE_SELF_DISPATCH_URL` | The app's own URL, so background automations and sub-agents reach the server. |
+
+### Deploy (how the live demo runs)
+
+The live app runs on Vercel with Neon Postgres. It is an open demo: `AUTH_DISABLED=true`, so every visitor uses the
+same board, and `GITHUB_TOKEN` is not set, so issues cannot be filed from it.
+
+```bash
+pnpm migrate:production                       # with DATABASE_URL pointing at Neon
+AGENT_NATIVE_VERCEL_CRON_SCHEDULE="0 9 * * *" NITRO_PRESET=vercel pnpm build   # Hobby plan allows daily crons only
+vercel deploy --prebuilt --prod
+```
+
+Production env: `DATABASE_URL`, `BETTER_AUTH_SECRET`, `CRON_SECRET`, `AMAZON_BEDROCK_API_KEY`, `AUTH_DISABLED`,
+`AGENT_NATIVE_SELF_DISPATCH_URL`. The framework only opens the chat when a provider key variable it knows is
+present, so `ANTHROPIC_API_KEY` holds a non-secret placeholder. The Bedrock engine never sends it anywhere.
 
 ## Pre-existing work and what was built for the hackathon
 

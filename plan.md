@@ -317,8 +317,8 @@ Each phase ends with a working, demoable app.
 ### Phase 7 — Polish, deploy, submit
 - [x] Agent engine moved to **Claude Sonnet 4.6 on Amazon Bedrock** (2026-11-09; Meta key stopped working): `server/lib/bedrock-engine.ts`, AWS credentials from the default chain. Deploy needs AWS credentials with Bedrock access in the host's environment.
 - [ ] Design pass (light/dark, empty states, loading, errors, onboarding tour)
-- [ ] Deploy (Vercel + Neon), demo mode, seeded board
-- [ ] README: problem, how it works, architecture, **pre-existing vs. new work disclosure**, run instructions
+- [x] Deploy (Vercel + Neon), demo mode, seeded board (2026-11-10): https://groundswell-board.vercel.app. Local PGlite copied into Neon with `pg_dump` (credential tables skipped). Open demo: `AUTH_DISABLED=true` (declared in `agent-native.json` `runtime.auth.enabled: false` so the config notice stays quiet), no `GITHUB_TOKEN`, so filing is off. Bedrock key from `AMAZON_BEDROCK_API_KEY`; the engine falls back to the deployment env value because the framework does not for production requests. `ANTHROPIC_API_KEY` is a non-secret placeholder that only opens the framework's chat gate. Hobby plan: daily cron via `AGENT_NATIVE_VERCEL_CRON_SCHEDULE`.
+- [x] README: problem, how it works, architecture, **pre-existing vs. new work disclosure**, run instructions, deploy
 - [ ] Record public Clips demo (script below), verify it plays logged out
 - [ ] Submit form, confirm receipt
 
@@ -337,8 +337,8 @@ Each phase ends with a working, demoable app.
 ---
 
 ## 12. Submission checklist
-- [ ] Live URL works logged out (demo mode)
-- [ ] Public repo with README + disclosure section (Chat template, libraries, data source)
+- [x] Live URL works logged out (demo mode): board, dashboard, briefs and agent chat checked 2026-11-10
+- [x] Public repo with README + disclosure section (Chat template, libraries, data source): https://github.com/Pavilion-devs/groundswell
 - [ ] Public Clips link plays without login
 - [ ] Form submitted, receipt confirmed
 - [ ] Nothing sensitive in the video or repo (tokens, emails)

@@ -5,5 +5,10 @@
   },
   "doctor": {
     "failOnBuild": false
+  },
+  "runtime": {
+    "auth": {
+      "enabled": false
+    }
   }
 }

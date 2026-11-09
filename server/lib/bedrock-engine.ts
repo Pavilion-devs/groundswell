@@ -43,7 +43,9 @@ registerRequiredSecret({
 const clients = new Map<string, AnthropicBedrock>();
 async function bedrock(): Promise<AnthropicBedrock> {
   const detail = await resolveSecretDetailed(BEDROCK_API_KEY);
-  const key = detail.value || "";
+  // A user's own saved key wins. Otherwise the deployment's key serves everyone: the hosted demo is one
+  // open board with auth off, and the framework does not fall back to env keys for production requests.
+  const key = detail.value || process.env.AMAZON_BEDROCK_API_KEY || ""; // guard:allow-env-credential — open demo's deployment Bedrock key
   let c = clients.get(key);
   if (!c) {
     c = key ? new AnthropicBedrock({ awsRegion: BEDROCK_REGION, apiKey: key }) : new AnthropicBedrock({ awsRegion: BEDROCK_REGION, apiKey: null });
