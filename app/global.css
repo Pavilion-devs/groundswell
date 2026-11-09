@@ -4,6 +4,8 @@
 @import "@agent-native/toolkit/styles.css";
 
 @source "./**/*.{ts,tsx}";
+/* The demo video project (frames, renders) is not app source. */
+@source not "../video";
 
 :root {
   --background: 0 0% 100%;

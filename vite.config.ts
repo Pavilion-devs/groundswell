@@ -7,6 +7,8 @@ const agentNativePlugins = agentNative as unknown as (
   options?: Parameters<typeof agentNative>[0],
 ) => any[];
 export default defineConfig({
+  // The demo video project writes thousands of capture frames; it is not app source.
+  server: { watch: { ignored: ["**/video/**"] } },
   optimizeDeps: {
     entries: [
       "app/entry.client.tsx",
