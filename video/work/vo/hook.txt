@@ -1,1 +1,0 @@
-Agent-Native has hundreds of GitHub issues. Which problems actually matter? Reading them all takes days. Asking an AI to summarise is fast, but you can't check its quotes, or its numbers.

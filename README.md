@@ -115,7 +115,7 @@ present, so `ANTHROPIC_API_KEY` holds a non-secret placeholder. The Bedrock engi
   `.agents/skills`.
 - **Twisky UI** (Favour's earlier project, [twiskylandingpage](https://github.com/Pavilion-devs/twiskylandingpage)):
   the dashboard shell, board columns and cards, drawer and landing page were ported from it and restyled with
-  Groundswell's data and copy. See [`DESIGN.md`](DESIGN.md).
+  Groundswell's data and copy.
 - **Libraries:** React Router, Drizzle, PGlite, Tailwind, shadcn/ui, Radix, lucide-react, the Vercel AI SDK,
   `@anthropic-ai/bedrock-sdk`, zod.
 - **Data:** the public issues of [BuilderIO/agent-native](https://github.com/BuilderIO/agent-native), imported
@@ -130,5 +130,5 @@ present, so `ANTHROPIC_API_KEY` holds a non-secret placeholder. The Bedrock engi
 - The Bedrock engine adapter and the Meta engine adapter.
 - The Groundswell screens: board, dashboard, review, problem and report drawers, teach-the-agent review sheet,
   briefs, sources, automations and the landing page.
-- The architecture diagram and the demo video (built with HyperFrames in [`video/`](video); voice-over and music
-  from HeyGen).
+- The architecture diagram and the [demo video](https://clips.agent-native.com/share/dZbVk7uLmoAk) (made with
+  HyperFrames; voice-over and music from HeyGen).

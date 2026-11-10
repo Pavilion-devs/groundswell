@@ -1,1 +1,0 @@
-Open any card, and its quote is highlighted: the server checked it word for word against the issue. Open a problem, and every number behind its rank comes from SQL: volume, people, engagement and recency. Never from the model.

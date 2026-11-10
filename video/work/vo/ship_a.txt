@@ -1,1 +1,0 @@
-For the top problem, I ask for an Insight Brief. The agent writes the problem, its impact and a next step, citing quotes the server checks word for word.

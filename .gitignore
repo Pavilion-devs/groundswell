@@ -44,3 +44,16 @@ data/*.lock
 .neon
 .vercel
 .env*.local
+
+# Local working notes and tooling, not part of the app
+plan.md
+CLAUDE.md
+DESIGN.md
+DEVELOPING.md
+CHANGELOG.md
+changelog/
+docs/demo-plan.md
+netlify.toml
+.claude/
+.mcp.json
+video/
