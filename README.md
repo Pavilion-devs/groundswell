@@ -9,7 +9,7 @@ for word against the source, and every number comes from SQL, never from the mod
 Built for the [Builder.io Agent-Native Hackathon](https://www.builder.io/hackathon) by **Favour Olaboye**.
 
 - **Live app:** https://groundswell-board.vercel.app (open demo, no sign-in; filing issues is switched off)
-- **Demo video:** _added after upload_
+- **Demo video (3 min):** https://clips.agent-native.com/share/dZbVk7uLmoAk
 
 ![The Groundswell board: problems ranked by SQL as columns, reports as cards with verified quotes](docs/board.png)
 
